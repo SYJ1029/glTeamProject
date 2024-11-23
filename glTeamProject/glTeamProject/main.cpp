@@ -152,6 +152,8 @@ bool pressedY = false;
 bool pressedR = false;
 bool pressedA = false;
 
+GLUquadricObj* qobj;
+
 void setupCamera() {
 	if (pressedA) {
 		float radiusX = 8.5f;
@@ -361,18 +363,30 @@ void drawFloor(GLint modelLoc) {
 
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.8f, 0.5f);
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-	glBindVertexArray(0);
-
+	glBindVertexArray(0);	
 }
 
 void drawPlayer(GLint modelLoc) {
-	glBindVertexArray(playerVAO);
+	qobj = gluNewQuadric();
+	gluQuadricDrawStyle(qobj, GLU_FILL);
+	gluQuadricNormals(qobj, GLU_SMOOTH);
+	gluQuadricOrientation(qobj, GLU_OUTSIDE);
 
 	mat4 playerModelMat = mat4(1.0f); // 플레이어 모델 행렬
+	playerModelMat = glm::rotate(playerModelMat, glm::radians(-90.0f), vec3(1.0f, 0.0f, 0.0f));
+
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(playerModelMat));
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 1.0f, 0.8f, 0.5f);
-	glDrawElements(GL_TRIANGLES, playerModel.face_count * 3, GL_UNSIGNED_INT, 0);
 
+	gluCylinder(qobj, 1.0, 0.3, 1.5, 20, 8);
+
+	playerModelMat = glm::translate(playerModelMat, vec3(0.0f, 0.0f, 2.0f));
+
+	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(playerModelMat));
+
+	gluSphere(qobj, 0.8, 50, 50);
+
+	glBindVertexArray(playerVAO);
 	glBindVertexArray(0); // VAO 언바인딩
 }
 
@@ -395,7 +409,6 @@ GLvoid drawScene() {
 
 	drawFloor(modelLoc);
 	drawPlayer(modelLoc);
-	
 	//--- 버퍼 스왑
 	glutSwapBuffers();
 }
