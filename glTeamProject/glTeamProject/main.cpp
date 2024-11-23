@@ -390,6 +390,35 @@ void drawPlayer(GLint modelLoc) {
 	glBindVertexArray(0); // VAO 언바인딩
 }
 
+void drawEnemy(GLint modelLoc) {
+	qobj = gluNewQuadric();
+	gluQuadricDrawStyle(qobj, GLU_FILL);
+	gluQuadricNormals(qobj, GLU_SMOOTH);
+	gluQuadricOrientation(qobj, GLU_OUTSIDE);
+
+
+	mat4 baseModelMat = glm::translate(mat4(1.0f), vec3(0.0f, 0.0f, 2.0f)); // 적이 그려지는 도형 전체에 대한 이동
+
+	mat4 enemyModelMat = mat4(1.0f); // 적 모델 행렬
+	enemyModelMat *= baseModelMat;
+	enemyModelMat = glm::rotate(enemyModelMat, glm::radians(-90.0f), vec3(1.0f, 0.0f, 0.0f));
+
+	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(enemyModelMat));
+	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 1.0f, 0.5f, 1.0f);
+
+	gluCylinder(qobj, 0.75f, 0.75f, 1.5f, 20.0f, 8.0f);
+
+	enemyModelMat = glm::translate(enemyModelMat,  vec3(0.0f, 0.0f, 0.0f));
+	enemyModelMat *= baseModelMat; // 회전한 흔적 제거
+
+	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(enemyModelMat));
+
+	gluSphere(qobj, 0.8, 50, 50);
+
+	glBindVertexArray(playerVAO);
+	glBindVertexArray(0); // VAO 언바인딩
+}
+
 //--- 출력 콜백 함수
 GLvoid drawScene() {
 	//--- 배경색 설정 및 버퍼 클리어
@@ -409,6 +438,7 @@ GLvoid drawScene() {
 
 	drawFloor(modelLoc);
 	drawPlayer(modelLoc);
+	drawEnemy(modelLoc);
 	//--- 버퍼 스왑
 	glutSwapBuffers();
 }
