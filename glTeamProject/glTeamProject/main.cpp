@@ -26,7 +26,7 @@ void make_shaderProgram();
 GLvoid drawScene();
 GLvoid Reshape(int w, int h);
 void InitFloor();
-void InitPlayer(const char* objFilename);
+void InitPlayer();
 char* filetobuf(const char* file)
 {
 	FILE* fptr;
@@ -47,89 +47,6 @@ char* filetobuf(const char* file)
 	return buf; // Return the buffer 
 }
 
-//--- obj파일 읽기
-typedef struct {
-	float x, y, z;
-} Vertex;
-
-typedef struct {
-	unsigned int v1, v2, v3;
-} Face;
-
-typedef struct {
-	Vertex* vertices;
-	size_t vertex_count;
-	Face* faces;
-	size_t face_count;
-} Model;
-Model playerModel;
-
-void read_obj_file(const char* filename, Model* model) {
-	FILE* file;
-	fopen_s(&file, filename, "r");
-	if (!file) {
-		perror("Error opening file");
-		exit(EXIT_FAILURE);
-	}
-
-	char line[MAX_LINE_LENGTH];
-	model->vertex_count = 0;
-	model->face_count = 0;
-
-	// 1단계: 정점(Vertex)와 면(Face)의 개수를 계산
-	while (fgets(line, sizeof(line), file)) {
-		if (line[0] == 'v' && line[1] == ' ') {
-			model->vertex_count++;
-		}
-		else if (line[0] == 'f' && line[1] == ' ') {
-			model->face_count++;
-		}
-	}
-
-	// 메모리 할당
-	model->vertices = (Vertex*)malloc(model->vertex_count * sizeof(Vertex));
-	model->faces = (Face*)malloc(model->face_count * sizeof(Face));
-
-	// 2단계: 파일을 다시 읽으며 데이터 파싱
-	fseek(file, 0, SEEK_SET); // 파일 포인터를 처음으로 이동
-	size_t vertex_index = 0;
-	size_t face_index = 0;
-
-	while (fgets(line, sizeof(line), file)) {
-		if (line[0] == 'v' && line[1] == ' ') {
-			// 정점(Vertex) 데이터 읽기
-			sscanf_s(line + 2, "%f %f %f",
-				&model->vertices[vertex_index].x,
-				&model->vertices[vertex_index].y,
-				&model->vertices[vertex_index].z);
-			vertex_index++;
-		}
-		else if (line[0] == 'f' && line[1] == ' ') {
-			// 면(Face) 데이터 읽기
-			unsigned int v1, v2, v3;
-			int matches = sscanf_s(line + 2, "%u//%*u %u//%*u %u//%*u", &v1, &v2, &v3);
-
-			// '//' 형식이 없는 경우 처리
-			if (matches != 3) {
-				sscanf_s(line + 2, "%u %u %u", &v1, &v2, &v3);
-			}
-
-			model->faces[face_index].v1 = v1 - 1; // OBJ 파일의 인덱스는 1부터 시작하므로 1을 뺌
-			model->faces[face_index].v2 = v2 - 1;
-			model->faces[face_index].v3 = v3 - 1;
-			face_index++;
-		}
-	}
-
-	for (size_t i = 0; i < playerModel.vertex_count; ++i) {
-		printf("Vertex %zu: %f %f %f\n", i, playerModel.vertices[i].x, playerModel.vertices[i].y, playerModel.vertices[i].z);
-	}
-	for (size_t i = 0; i < playerModel.face_count; ++i) {
-		printf("Face %zu: %u %u %u\n", i, playerModel.faces[i].v1, playerModel.faces[i].v2, playerModel.faces[i].v3);
-	}
-	fclose(file);
-}
-
 //--- 셰이더 변수 선언
 GLint width, height;
 GLchar* vertexSource, * fragmentSource; //--- 소스코드 저장 변수
@@ -140,40 +57,46 @@ GLuint playerVAO, playerVBO, playerEBO;
 mat4 view;
 mat4 projection;
 //--- 전역 변수 선언
-GLfloat mouseX = 0.0f, mouseY = 0.0f;
-
-vec3 cameraPos = vec3(8.5f, 3.0f, 0.0f);		//--- 카메라 위치
-vec3 cameraDirection = vec3(0.0f, 0.0f, 0.0f);	//--- 카메라 바라보는 방향
-vec3 cameraUp = vec3(0.0f, 1.0f, 0.0f);			//--- 카메라 위쪽 방향
-float cameraAngle = 0.0f;						// 카메라의 현재 회전 각도 (초기값)
-float rotationSpeed = 1.0f;						// 카메라 회전 속도 (deg/sec)
-
-bool pressedY = false;
-bool pressedR = false;
-bool pressedA = false;
-
 GLUquadricObj* qobj;
 
+typedef struct Player {
+	GLfloat x, y, z;
+	GLfloat dx, dy, dz;
+	GLfloat angleXZ;
+	GLfloat angleY;
+};
+Player player;
+
+typedef struct Enemy {
+	GLfloat x, y, z;
+	// GLfloat angle;
+};
+std::vector<Enemy>g_enemies;
+
+typedef struct Building {
+	GLfloat x, y, z;
+	GLfloat scale;
+};
+std::vector<Building>g_buildings;
+
+float prevMouseX, prevMouseY;
+float deltaX = 0.0f, deltaY = 0.0f;
+
+vec3 cameraPos = vec3(player.x +1.0f, player.y + 2.0f, player.z);			//--- 카메라 위치
+vec3 cameraDirection = vec3(player.x + 2.0f, player.y + 2.0f, player.z);	//--- 카메라 바라보는 방향
+vec3 cameraUp = vec3(0.0f, 1.0f, 0.0f);			//--- 카메라 위쪽 방향
+float rotationSpeed = 1.0f;						// 카메라 회전 속도 (deg/sec)
+
 void setupCamera() {
-	if (pressedA) {
-		float radiusX = 8.5f;
-		float radiusY = 3.0f;
+	float radius = 1.0f;
 
-		// 각도에 따른 카메라 방향을 설정
-		cameraDirection.x = radiusX * cos(glm::radians(cameraAngle)) + radiusX;
-		cameraDirection.y = radiusY * sin(glm::radians(cameraAngle)) + radiusY;
-	}
-	if (pressedY) {
-		float radius = 8.5f; // 반지름 (원의 중심에서 카메라의 위치까지의 거리)
+	cameraPos.x = player.x + radius * cos(glm::radians(player.angleXZ));
+	cameraPos.y = player.y + 2.0f;
+	cameraPos.z = player.z + radius * sin(glm::radians(player.angleXZ));
 
-		// 각도에 따른 카메라 방향을 설정
-		cameraDirection.x = radius * cos(glm::radians(cameraAngle)) + radius;
-		cameraDirection.z = radius * sin(glm::radians(cameraAngle));
-	}
-	if (pressedR) {
-		cameraPos.x = 8.5f * cos(glm::radians(cameraAngle));
-		cameraPos.z = 8.5f * sin(glm::radians(cameraAngle));
-	}
+	cameraDirection.x = player.x + 2 * (radius * cos(glm::radians(player.angleXZ)));
+	cameraDirection.y = cameraPos.y;
+	cameraDirection.z = player.z + 2 * (radius * sin(glm::radians(player.angleXZ)));
 
 	view = lookAt(cameraPos, cameraDirection, cameraUp);
 	projection = perspective(radians(45.0f), (float)WINDOW_X / (float)WINDOW_Y, 0.1f, 50.0f);
@@ -181,49 +104,34 @@ void setupCamera() {
 
 // 타이머 함수
 void timerFunc(int value) {
-	if (pressedR || pressedY || pressedA) {
-		cameraAngle += rotationSpeed;
-		if (cameraAngle >= 360.0f) cameraAngle -= 360.0f;
-		setupCamera();
-	}
+	vec3 direction = normalize(vec3(
+		cos(glm::radians(player.angleXZ)),  // X축 성분
+		0.0f,                              // Y축 (고정)
+		sin(glm::radians(player.angleXZ))  // Z축 성분
+	));
+
+	player.x += player.dx * direction.x - player.dz * direction.z;
+	player.z += player.dx * direction.z + player.dz * direction.x;
+	player.y += player.dy;
+
+	setupCamera();
 	glutPostRedisplay();
 	glutTimerFunc(100, timerFunc, 0);
 }
 
 void keyboard(unsigned char key, int x, int y) {
 	switch (key) {
-	case 'x':
-		cameraPos += vec3(0.0f, 0.0f, 0.5f);
-		cameraDirection += vec3(0.0f, 0.0f, 0.5f);
-		setupCamera();
-		break;
-	case 'X':
-		cameraPos -= vec3(0.0f, 0.0f, 0.5f);
-		cameraDirection -= vec3(0.0f, 0.0f, 0.5f);
-		setupCamera();
-		break;
-	case 'z':
-		cameraPos += vec3(0.5f, 0.0f, 0.0f);
-		cameraDirection += vec3(0.5f, 0.0f, 0.0f);
-		setupCamera();
-		break;
-	case 'Z':
-		cameraPos -= vec3(0.5f, 0.0f, 0.0f);
-		cameraDirection -= vec3(0.5f, 0.0f, 0.0f);
-		setupCamera();
-		break;
-	case 'y':
-		pressedY = !pressedY;
-		cameraAngle = -180;
-		break;
-	case 'r':
-		pressedR = !pressedR;
-		cameraPos = vec3(8.5f, 3.0f, 0.0f);
-		cameraAngle = 0;
+	case 'w':
+		if (player.dx < 0.3f) player.dx += 0.3f;
 		break;
 	case 'a':
-		pressedA = !pressedA;
-		cameraAngle = -180;
+		if(player.dz > -0.3f) player.dz -= 0.3f;
+		break;
+	case 's':
+		if (player.dx > -0.3f) player.dx -= 0.3f;
+		break;
+	case 'd':
+		if (player.dz < 0.3f) player.dz += 0.3f;
 		break;
 	case 'q':
 		exit(0);
@@ -232,9 +140,25 @@ void keyboard(unsigned char key, int x, int y) {
 	glutPostRedisplay();
 }
 
+void keyboardUp(unsigned char key, int x, int y) {
+	switch (key) {
+	case 'w':
+		player.dx -= 0.3f;
+		break;
+	case 'a':
+		player.dz += 0.3f;
+		break;
+	case 's':
+		player.dx += 0.3f;
+		break;
+	case 'd':
+		player.dz -= 0.3f;
+		break;
+	}
+	glutPostRedisplay();
+}
+
 void Mouse(int button, int state, int x, int y) {
-	mouseX = (2.0f * x / WINDOW_X) - 1.0f;
-	mouseY = 1.0f - (2.0f * y / WINDOW_Y);
 	if (button == GLUT_LEFT_BUTTON) {
 		if (state == GLUT_DOWN) {
 
@@ -247,6 +171,35 @@ void Mouse(int button, int state, int x, int y) {
 }
 
 void Motion(int x, int y) {
+	glutPostRedisplay();
+}
+
+void PassiveMotion(int x, int y) {
+	float mouseX = (2.0f * x / WINDOW_X) - 1.0f;
+	float mouseY = 1.0f - (2.0f * y / WINDOW_Y);
+
+	static bool firstMouse = true;
+	if (firstMouse) {
+		prevMouseX = mouseX;
+		prevMouseY = mouseY;
+		firstMouse = false; // 이후부터는 초기화 불필요
+		return; // 초기화 후 첫 계산을 건너뜀
+	}
+
+	deltaX = mouseX - prevMouseX;
+	deltaY = mouseY - prevMouseY;
+
+	float angleIncrement = 90.0f;
+	player.angleXZ += deltaX * angleIncrement;
+
+	if (player.angleXZ >= 360.0f) player.angleXZ -= 360.0f;
+	if (player.angleXZ < 0.0f) player.angleXZ += 360.0f;
+
+	prevMouseX = mouseX;
+	prevMouseY = mouseY;
+
+	printf("Mouse moved: deltaX = %.3f, player.angleXZ = %.3f\r", deltaX, player.angleXZ);
+
 	glutPostRedisplay();
 }
 
@@ -267,7 +220,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 
 	//--- 세이더 읽어와서 세이더 프로그램 만들기
 	make_shaderProgram();
-	InitPlayer("obj.obj");
+	InitPlayer();
 	InitFloor();
 	setupCamera();
 	glEnable(GL_DEPTH_TEST);
@@ -276,8 +229,10 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glutDisplayFunc(drawScene);
 	glutReshapeFunc(Reshape);
 	glutKeyboardFunc(keyboard);
-	//glutMouseFunc(Mouse);
+	glutKeyboardUpFunc(keyboardUp);
+	glutMouseFunc(Mouse);
 	//glutMotionFunc(Motion);
+	glutPassiveMotionFunc(PassiveMotion);
 	glutTimerFunc(1000, timerFunc, 0);
 	glutMainLoop();
 }
@@ -367,23 +322,16 @@ void drawFloor(GLint modelLoc) {
 }
 
 void drawPlayer(GLint modelLoc) {
-	qobj = gluNewQuadric();
-	gluQuadricDrawStyle(qobj, GLU_FILL);
-	gluQuadricNormals(qobj, GLU_SMOOTH);
-	gluQuadricOrientation(qobj, GLU_OUTSIDE);
-
 	mat4 playerModelMat = mat4(1.0f); // 플레이어 모델 행렬
 	playerModelMat = glm::rotate(playerModelMat, glm::radians(-90.0f), vec3(1.0f, 0.0f, 0.0f));
 
+	playerModelMat = glm::translate(playerModelMat, vec3(player.x, player.y, player.z));
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(playerModelMat));
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 1.0f, 0.8f, 0.5f);
-
 	gluCylinder(qobj, 1.0, 0.3, 1.5, 20, 8);
 
-	playerModelMat = glm::translate(playerModelMat, vec3(0.0f, 0.0f, 2.0f));
-
+	playerModelMat = glm::translate(playerModelMat, vec3(player.x, player.y, player.z + 2.0f));
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(playerModelMat));
-
 	gluSphere(qobj, 0.8, 50, 50);
 
 	glBindVertexArray(playerVAO);
@@ -391,12 +339,6 @@ void drawPlayer(GLint modelLoc) {
 }
 
 void drawEnemy(GLint modelLoc) {
-	qobj = gluNewQuadric();
-	gluQuadricDrawStyle(qobj, GLU_FILL);
-	gluQuadricNormals(qobj, GLU_SMOOTH);
-	gluQuadricOrientation(qobj, GLU_OUTSIDE);
-
-
 	mat4 baseModelMat = glm::translate(mat4(1.0f), vec3(0.0f, 0.0f, 2.0f)); // 적이 그려지는 도형 전체에 대한 이동
 
 	mat4 enemyModelMat = mat4(1.0f); // 적 모델 행렬
@@ -452,10 +394,10 @@ void InitFloor() {
 	// 바닥 정점 데이터
 	GLfloat floorVertices[] = {
 		// Positions          // Colors
-		-5.0f, 0.0f, -5.0f,//   0.5f, 0.5f, 0.5f, // Bottom-left
-		 5.0f, 0.0f, -5.0f,//   0.5f, 0.5f, 0.5f, // Bottom-right
-		-5.0f, 0.0f,  5.0f,//   0.5f, 0.5f, 0.5f, // Top-left
-		 5.0f, 0.0f,  5.0f,//   0.5f, 0.5f, 0.5f  // Top-right
+		-50.0f, 0.0f, -50.0f,//   0.5f, 0.5f, 0.5f, // Bottom-left
+		 50.0f, 0.0f, -50.0f,//   0.5f, 0.5f, 0.5f, // Bottom-right
+		-50.0f, 0.0f,  50.0f,//   0.5f, 0.5f, 0.5f, // Top-left
+		 50.0f, 0.0f,  50.0f,//   0.5f, 0.5f, 0.5f  // Top-right
 	};
 
 	// 바닥의 인덱스 데이터
@@ -487,27 +429,27 @@ void InitFloor() {
 	glBindVertexArray(0);
 }
 
-void InitPlayer(const char* objFilename) {
-	read_obj_file(objFilename, &playerModel);
-
-	// VAO, VBO, EBO 생성
+void InitPlayer() {
+	// 플레이어의 VAO 생성
 	glGenVertexArrays(1, &playerVAO);
-	glGenBuffers(1, &playerVBO);
-	glGenBuffers(1, &playerEBO);
-
 	glBindVertexArray(playerVAO);
 
-	// VBO에 정점 데이터 업로드
-	glBindBuffer(GL_ARRAY_BUFFER, playerVBO);
-	glBufferData(GL_ARRAY_BUFFER, playerModel.vertex_count * sizeof(Vertex), playerModel.vertices, GL_STATIC_DRAW);
+	// 플레이어 모델용 Quadric 생성
+	qobj = gluNewQuadric();
+	gluQuadricDrawStyle(qobj, GLU_FILL);
+	gluQuadricNormals(qobj, GLU_SMOOTH);
+	gluQuadricOrientation(qobj, GLU_OUTSIDE);
 
-	// EBO에 인덱스 데이터 업로드
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, playerEBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, playerModel.face_count * sizeof(Face), playerModel.faces, GL_STATIC_DRAW);
-
-	// 정점 속성 설정 (attribute 0: position)
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)0);
-	glEnableVertexAttribArray(0);
+	// 필요하면 추가 데이터 생성 및 업로드
+	// 현재는 gluCylinder와 gluSphere를 사용하므로 별도 VBO/EBO가 필요하지 않을 수 있습니다.
 
 	glBindVertexArray(0); // VAO 언바인딩
+	player.x = 0.0f;
+	player.y = 0.0f;
+	player.z = 0.0f;
+	player.dx = 0.0f;
+	player.dy = 0.0f;
+	player.dz = 0.0f;
+	player.angleXZ = 0.0f;
+	player.angleY = 0.0f;
 }
