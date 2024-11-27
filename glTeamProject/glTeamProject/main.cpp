@@ -27,7 +27,7 @@ GLvoid drawScene();
 GLvoid Reshape(int w, int h);
 void InitFloor();
 void InitPlayer();
-void InitBuliding(int count);
+void InitBuliding();
 char* filetobuf(const char* file)
 {
 	FILE* fptr;
@@ -100,12 +100,12 @@ void setupCamera() {
 	//cameraDirection.y = cameraPos.y;
 	//cameraDirection.z = player.z + 2 * (radius * sin(glm::radians(player.angleXZ)));
 
-	cameraPos = vec3(1.0f, 45.0f, 0.0f);			//--- 카메라 위치
+	cameraPos = vec3(1.0f, 150.0f, 0.0f);			//--- 카메라 위치
 	cameraDirection = vec3(0.0f, 0.0f, 0.0f);	//--- 카메라 바라보는 방향
 	cameraUp = vec3(0.0f, 1.0f, 0.0f);			//--- 카메라 위쪽 방향
 
 	view = lookAt(cameraPos, cameraDirection, cameraUp);
-	projection = perspective(radians(45.0f), (float)WINDOW_X / (float)WINDOW_Y, 0.1f, 50.0f);
+	projection = perspective(radians(45.0f), (float)WINDOW_X / (float)WINDOW_Y, 0.1f, 175.0f);
 }
 
 // 타이머 함수
@@ -228,7 +228,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	make_shaderProgram();
 	InitPlayer();
 	InitFloor();
-	InitBuliding(numBuild);
+	InitBuliding();
 	setupCamera();
 	glEnable(GL_DEPTH_TEST);
 
@@ -317,6 +317,10 @@ void make_shaderProgram()
 	glUseProgram(shaderProgramID);
 }
 
+
+
+
+
 void drawFloor(GLint modelLoc) {
 	// 바닥
 	glBindVertexArray(floorVAO);
@@ -379,7 +383,8 @@ void drawBuliding(GLint modelLoc) {
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(buildingModelMat));
 		glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 1.0f);
 
-		gluCylinder(qobj, 3.0f, 3.0f, 3.0f, 20.0f, 8.0f);
+		gluCylinder(qobj, g_buildings[i].x * g_buildings[i].scale, g_buildings[i].x * g_buildings[i].scale, 
+			g_buildings[i].y * g_buildings[i].scale, 20.0f, 8.0f);
 	}
 }
 
@@ -478,11 +483,17 @@ void InitPlayer() {
 }
 
 
-void InitBuliding(int count) {
+void InitBuliding() {
 	Building building;
 
-	for (int i = 0; i < count; i++) {
-		building = { (float)1.0 * i, 0.0f, (float)1.0 * i, 1.0f};
-		g_buildings.push_back(building);
-	}
+	building = { 2.0f, 0.0f, 1.0f, 1.0f};
+	g_buildings.push_back(building);
+	building = { -2.0f, 0.0f, 2.0f, 2.0f };
+	g_buildings.push_back(building);
+	building = { 1.0f, 0.0f, -2.0f, 1.0f };
+	g_buildings.push_back(building);
+	building = { -2.0f, 0.0f, 1.0f, 2.0f };
+	g_buildings.push_back(building);
+	building = { 3.0f, 0.0f, 3.0f, 1.5f };
+	g_buildings.push_back(building);
 }
