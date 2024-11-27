@@ -27,6 +27,7 @@ GLvoid drawScene();
 GLvoid Reshape(int w, int h);
 void InitFloor();
 void InitPlayer();
+void InitBuliding(int count);
 char* filetobuf(const char* file)
 {
 	FILE* fptr;
@@ -78,25 +79,30 @@ typedef struct Building {
 	GLfloat scale;
 };
 std::vector<Building>g_buildings;
+int numBuild = 10;
 
 float prevMouseX, prevMouseY;
 float deltaX = 0.0f, deltaY = 0.0f;
 
-vec3 cameraPos = vec3(player.x +1.0f, player.y + 2.0f, player.z);			//--- 카메라 위치
-vec3 cameraDirection = vec3(player.x + 2.0f, player.y + 2.0f, player.z);	//--- 카메라 바라보는 방향
+vec3 cameraPos = vec3(0.0f, 8.0f, 0.0f);			//--- 카메라 위치
+vec3 cameraDirection = vec3(0.0f, 0.0f, 0.0f);	//--- 카메라 바라보는 방향
 vec3 cameraUp = vec3(0.0f, 1.0f, 0.0f);			//--- 카메라 위쪽 방향
 float rotationSpeed = 1.0f;						// 카메라 회전 속도 (deg/sec)
 
 void setupCamera() {
 	float radius = 1.0f;
 
-	cameraPos.x = player.x + radius * cos(glm::radians(player.angleXZ));
-	cameraPos.y = player.y + 2.0f;
-	cameraPos.z = player.z + radius * sin(glm::radians(player.angleXZ));
+	//cameraPos.x = player.x + radius * cos(glm::radians(player.angleXZ));
+	//cameraPos.y = player.y + 2.0f;
+	//cameraPos.z = player.z + radius * sin(glm::radians(player.angleXZ));
 
-	cameraDirection.x = player.x + 2 * (radius * cos(glm::radians(player.angleXZ)));
-	cameraDirection.y = cameraPos.y;
-	cameraDirection.z = player.z + 2 * (radius * sin(glm::radians(player.angleXZ)));
+	//cameraDirection.x = player.x + 2 * (radius * cos(glm::radians(player.angleXZ)));
+	//cameraDirection.y = cameraPos.y;
+	//cameraDirection.z = player.z + 2 * (radius * sin(glm::radians(player.angleXZ)));
+
+	cameraPos = vec3(1.0f, 45.0f, 0.0f);			//--- 카메라 위치
+	cameraDirection = vec3(0.0f, 0.0f, 0.0f);	//--- 카메라 바라보는 방향
+	cameraUp = vec3(0.0f, 1.0f, 0.0f);			//--- 카메라 위쪽 방향
 
 	view = lookAt(cameraPos, cameraDirection, cameraUp);
 	projection = perspective(radians(45.0f), (float)WINDOW_X / (float)WINDOW_Y, 0.1f, 50.0f);
@@ -222,6 +228,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	make_shaderProgram();
 	InitPlayer();
 	InitFloor();
+	InitBuliding(numBuild);
 	setupCamera();
 	glEnable(GL_DEPTH_TEST);
 
@@ -361,6 +368,21 @@ void drawEnemy(GLint modelLoc) {
 	glBindVertexArray(0); // VAO 언바인딩
 }
 
+void drawBuliding(GLint modelLoc) {
+	mat4 buildingModelMat = mat4(1.0f);
+
+	for (int i = 0; i < g_buildings.size(); i++) {
+		buildingModelMat *= translate(buildingModelMat, vec3(g_buildings[i].x, g_buildings[i].y, g_buildings[i].z));
+		buildingModelMat *= scale(buildingModelMat, vec3(g_buildings[i].scale));
+		buildingModelMat = glm::rotate(buildingModelMat, glm::radians(-90.0f), vec3(1.0f, 0.0f, 0.0f));
+
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(buildingModelMat));
+		glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 1.0f);
+
+		gluCylinder(qobj, 3.0f, 3.0f, 3.0f, 20.0f, 8.0f);
+	}
+}
+
 //--- 출력 콜백 함수
 GLvoid drawScene() {
 	//--- 배경색 설정 및 버퍼 클리어
@@ -381,6 +403,7 @@ GLvoid drawScene() {
 	drawFloor(modelLoc);
 	drawPlayer(modelLoc);
 	drawEnemy(modelLoc);
+	drawBuliding(modelLoc);
 	//--- 버퍼 스왑
 	glutSwapBuffers();
 }
@@ -452,4 +475,14 @@ void InitPlayer() {
 	player.dz = 0.0f;
 	player.angleXZ = 0.0f;
 	player.angleY = 0.0f;
+}
+
+
+void InitBuliding(int count) {
+	Building building;
+
+	for (int i = 0; i < count; i++) {
+		building = { (float)1.0 * i, 0.0f, (float)1.0 * i, 1.0f};
+		g_buildings.push_back(building);
+	}
 }
