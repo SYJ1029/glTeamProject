@@ -97,17 +97,17 @@ float rotationSpeed = 1.0f;						// 카메라 회전 속도 (deg/sec)
 void setupCamera() {
 	float radius = 1.0f;
 
-	//cameraPos.x = player.x + radius * cos(glm::radians(player.angleXZ));
-	//cameraPos.y = player.y + 2.0f;
-	//cameraPos.z = player.z + radius * sin(glm::radians(player.angleXZ));
+	cameraPos.x = player.x + radius * cos(glm::radians(player.angleXZ));
+	cameraPos.y = player.y + 2.0f;
+	cameraPos.z = player.z + radius * sin(glm::radians(player.angleXZ));
 
-	//cameraDirection.x = player.x + 2 * (radius * cos(glm::radians(player.angleXZ)));
-	//cameraDirection.y = cameraPos.y;
-	//cameraDirection.z = player.z + 2 * (radius * sin(glm::radians(player.angleXZ)));
+	cameraDirection.x = player.x + 2 * (radius * cos(glm::radians(player.angleXZ)));
+	cameraDirection.y = cameraPos.y;
+	cameraDirection.z = player.z + 2 * (radius * sin(glm::radians(player.angleXZ)));
 
-	cameraPos = vec3(0.0f, 125.0f, 0.0f);			//--- 카메라 위치
-	cameraDirection = vec3(0.0f, 0.0f, 0.0f);	//--- 카메라 바라보는 방향
-	cameraUp = vec3(1.0f, 0.0f, 0.0f);			//--- 카메라 위쪽 방향
+	//cameraPos = vec3(0.0f, 125.0f, 0.0f);			//--- 카메라 위치
+	//cameraDirection = vec3(0.0f, 0.0f, 0.0f);	//--- 카메라 바라보는 방향
+	//cameraUp = vec3(1.0f, 0.0f, 0.0f);			//--- 카메라 위쪽 방향
 
 	view = lookAt(cameraPos, cameraDirection, cameraUp);
 	projection = perspective(radians(45.0f), (float)WINDOW_X / (float)WINDOW_Y, 0.1f, 175.0f);
@@ -123,7 +123,7 @@ void timerFunc(int value) {
 
 	player.x += player.dx * direction.x - player.dz * direction.z;
 	player.z += player.dx * direction.z + player.dz * direction.x;
-	player.y += player.dy;
+	//player.y += player.dy;
 
 	setupCamera();
 	glutPostRedisplay();
@@ -322,10 +322,6 @@ void make_shaderProgram()
 	glUseProgram(shaderProgramID);
 }
 
-
-
-
-
 void drawFloor(GLint modelLoc) {
 	// 바닥
 	glBindVertexArray(floorVAO);
@@ -339,14 +335,14 @@ void drawFloor(GLint modelLoc) {
 
 void drawPlayer(GLint modelLoc) {
 	mat4 playerModelMat = mat4(1.0f); // 플레이어 모델 행렬
-	playerModelMat = glm::rotate(playerModelMat, glm::radians(-90.0f), vec3(1.0f, 0.0f, 0.0f));
 
 	playerModelMat = glm::translate(playerModelMat, vec3(player.x, player.y, player.z));
+	playerModelMat = glm::rotate(playerModelMat, glm::radians(-90.0f), vec3(1.0f, 0.0f, 0.0f));
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(playerModelMat));
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 1.0f, 0.8f, 0.5f);
 	gluCylinder(qobj, 1.0, 0.3, 1.5, 20, 8);
 
-	playerModelMat = glm::translate(playerModelMat, vec3(player.x, player.y, player.z + 2.0f));
+	playerModelMat = glm::translate(playerModelMat, vec3(0.0f, 0.0f, 2.0f));
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(playerModelMat));
 	gluSphere(qobj, 0.8, 50, 50);
 
@@ -408,6 +404,7 @@ GLvoid drawScene() {
 	GLint viewLoc = glGetUniformLocation(shaderProgramID, "view");
 	GLint projLoc = glGetUniformLocation(shaderProgramID, "projection");
 
+	glViewport(0, 0, WINDOW_X, WINDOW_Y); // 전체 화면
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(view));
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, value_ptr(projection));
 
@@ -415,6 +412,20 @@ GLvoid drawScene() {
 	drawPlayer(modelLoc);
 	drawEnemy(modelLoc);
 	drawBuliding(modelLoc);
+
+	// 미니맵
+	glViewport(WINDOW_X * 3 / 4, WINDOW_Y * 3 / 4, WINDOW_X / 4, WINDOW_Y / 4); // 오른쪽 위
+	vec3 bodyModelPosV2 = vec3(player.x, 0.0f, player.z); // bodyModel의 대략적인 위치
+	vec3 cameraPosV2 = vec3(player.x, 50.0f, player.z);
+	mat4 bodyViewV2 = lookAt(cameraPosV2, bodyModelPosV2, vec3(1.0f, 0.0f, 0.0f)); // bodyModel을 바라보는 뷰 행렬
+	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(bodyViewV2));
+	glUniformMatrix4fv(projLoc, 1, GL_FALSE, value_ptr(projection));
+
+	drawFloor(modelLoc);
+	drawPlayer(modelLoc);
+	drawEnemy(modelLoc);
+	drawBuliding(modelLoc);
+
 	//--- 버퍼 스왑
 	glutSwapBuffers();
 }
@@ -487,7 +498,6 @@ void InitPlayer() {
 	player.angleXZ = 0.0f;
 	player.angleY = 0.0f;
 }
-
 
 GLfloat GetRandomNumber(int seed) {
 	// 결과값의 범위는 [-seed/2, seed/2]
