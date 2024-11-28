@@ -36,11 +36,7 @@ void read_obj_file(const char* filename, Model* model) {
 	}
 
 	// 메모리 할당
-	model->vertices = (GLfloat**)malloc(model->vertex_count * sizeof(Vertex));
-	// vertices를 2차원 배열로 할당하게 했으므로 재할당 과정을 2번에 걸쳐서 해야함
-	for (int i = 0; i < model->vertex_count; i++) {
-		model->vertices[i] = (GLfloat*)malloc(3 * sizeof(GLfloat));
-	}
+	model->vertices = (Vertex*)malloc(model->vertex_count * sizeof(Vertex));
 	model->faces = (Face*)malloc(model->face_count * sizeof(Face));
 
 	// 2단계: 파일을 다시 읽으며 데이터 파싱
@@ -52,9 +48,9 @@ void read_obj_file(const char* filename, Model* model) {
 		if (line[0] == 'v' && line[1] == ' ') {
 			// 정점(Vertex) 데이터 읽기
 			sscanf_s(line + 2, "%f %f %f",
-				&model->vertices[vertex_index][0],
-				&model->vertices[vertex_index][1],
-				&model->vertices[vertex_index][2]);
+				&model->vertices[vertex_index].x,
+				&model->vertices[vertex_index].y,
+				&model->vertices[vertex_index].z);
 			vertex_index++;
 		}
 		else if (line[0] == 'f' && line[1] == ' ') {
@@ -75,7 +71,7 @@ void read_obj_file(const char* filename, Model* model) {
 	}
 
 	for (size_t i = 0; i < model->vertex_count; ++i) {
-		printf("Vertex %zu: %f %f %f\n", i, model->vertices[i][0], model->vertices[i][1], model->vertices[i][2]);
+		printf("Vertex %zu: %f %f %f\n", i, model->vertices[i].x, model->vertices[i].y, model->vertices[i].z);
 	}
 	for (size_t i = 0; i < model->face_count; ++i) {
 		printf("Face %zu: %u %u %u\n", i, model->faces[i].v1, model->faces[i].v2, model->faces[i].v3);

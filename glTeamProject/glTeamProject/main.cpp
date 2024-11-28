@@ -381,9 +381,9 @@ void drawBuliding(GLint modelLoc) {
 	mat4 buildingModelMat = mat4(1.0f);
 	glBindVertexArray(buildVAO);
 	for (int i = 0; i < g_buildings.size(); i++) {
+		buildingModelMat = mat4(1.0f);
 		buildingModelMat *= translate(buildingModelMat, vec3(g_buildings[i].x, g_buildings[i].y, g_buildings[i].z));
 		buildingModelMat *= scale(buildingModelMat, vec3(g_buildings[i].scale));
-		buildingModelMat = glm::rotate(buildingModelMat, glm::radians(-90.0f), vec3(1.0f, 0.0f, 0.0f));
 
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(buildingModelMat));
 		glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 1.0f);
@@ -411,9 +411,9 @@ GLvoid drawScene() {
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(view));
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, value_ptr(projection));
 
-	drawFloor(modelLoc);
-	drawPlayer(modelLoc);
-	drawEnemy(modelLoc);
+	//drawFloor(modelLoc);
+	//drawPlayer(modelLoc);
+	//drawEnemy(modelLoc);
 	drawBuliding(modelLoc);
 	//--- 버퍼 스왑
 	glutSwapBuffers();
@@ -494,7 +494,7 @@ void InitBuliding(const char* objFilename) {
 
 	read_obj_file(objFilename, &buildingModel);
 
-	building = { 2.0f, 0.0f, 1.0f, 1.0f};
+	building = { 0.0f, 1.0f, 0.0f, 1.0f};
 	g_buildings.push_back(building);
 	building = { -2.0f, 0.0f, 2.0f, 2.0f };
 	g_buildings.push_back(building);
@@ -514,7 +514,7 @@ void InitBuliding(const char* objFilename) {
 
 	//VBO에 데이터 등록
 	glBindBuffer(GL_ARRAY_BUFFER, buildVBO);
-	glBufferData(GL_ARRAY_BUFFER, 3 * sizeof(buildingModel.vertices), buildingModel.vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(buildingModel.vertices), buildingModel.vertices, GL_STATIC_DRAW);
 	cout << sizeof(buildingModel.vertices) << endl;
 
 	//EBO에 데이터 등록
@@ -524,7 +524,7 @@ void InitBuliding(const char* objFilename) {
 
 
 	// 위치 속성 지정 (attribute 0)
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)0);
 	glEnableVertexAttribArray(0);
 
 	// VAO 언바인딩

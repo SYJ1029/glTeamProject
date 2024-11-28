@@ -30,7 +30,7 @@ typedef struct {
 } Face;
 
 typedef struct {
-	GLfloat** vertices;
+	Vertex* vertices;
 	size_t vertex_count;
 	Face* faces;
 	size_t face_count;
