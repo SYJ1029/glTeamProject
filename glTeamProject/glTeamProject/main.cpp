@@ -11,6 +11,7 @@
 #include <gl/glm/glm/ext.hpp>
 #include <gl/glm/glm/gtc/matrix_transform.hpp>
 #include <vector>
+#include "readObj.h"
 
 #define MAX_LINE_LENGTH 100
 #define M_PI 3.141592
@@ -18,6 +19,7 @@
 #define WINDOW_Y 600
 
 using namespace glm;
+using namespace std;
 
 //--- 아래 5개 함수는 사용자 정의 함수
 void make_vertexShaders();
@@ -27,7 +29,7 @@ GLvoid drawScene();
 GLvoid Reshape(int w, int h);
 void InitFloor();
 void InitPlayer();
-void InitBuliding();
+void InitBuliding(const char* objFilename);
 char* filetobuf(const char* file)
 {
 	FILE* fptr;
@@ -55,6 +57,8 @@ GLuint vertexShader, fragmentShader; //--- 세이더 객체
 GLuint shaderProgramID; //--- 셰이더 프로그램
 GLuint floorVAO, floorVBO, floorEBO;
 GLuint playerVAO, playerVBO, playerEBO;
+GLuint enemyVAO, enemyVBO, enemyEBO;
+GLuint buildVAO, buildVBO, buildEBO;
 mat4 view;
 mat4 projection;
 //--- 전역 변수 선언
@@ -79,6 +83,7 @@ typedef struct Building {
 	GLfloat scale;
 };
 std::vector<Building>g_buildings;
+Model buildingModel;
 int numBuild = 10;
 
 float prevMouseX, prevMouseY;
@@ -228,7 +233,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	make_shaderProgram();
 	InitPlayer();
 	InitFloor();
-	InitBuliding();
+	InitBuliding("obj.obj");
 	setupCamera();
 	glEnable(GL_DEPTH_TEST);
 
@@ -368,13 +373,13 @@ void drawEnemy(GLint modelLoc) {
 
 	gluSphere(qobj, 0.8, 50, 50);
 
-	glBindVertexArray(playerVAO);
+	glBindVertexArray(enemyVAO);
 	glBindVertexArray(0); // VAO 언바인딩
 }
 
 void drawBuliding(GLint modelLoc) {
 	mat4 buildingModelMat = mat4(1.0f);
-
+	glBindVertexArray(buildVAO);
 	for (int i = 0; i < g_buildings.size(); i++) {
 		buildingModelMat *= translate(buildingModelMat, vec3(g_buildings[i].x, g_buildings[i].y, g_buildings[i].z));
 		buildingModelMat *= scale(buildingModelMat, vec3(g_buildings[i].scale));
@@ -383,9 +388,10 @@ void drawBuliding(GLint modelLoc) {
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(buildingModelMat));
 		glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 1.0f);
 
-		gluCylinder(qobj, g_buildings[i].x * g_buildings[i].scale, g_buildings[i].x * g_buildings[i].scale, 
-			g_buildings[i].y * g_buildings[i].scale, 20.0f, 8.0f);
+		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 	}
+
+	glBindVertexArray(0);
 }
 
 //--- 출력 콜백 함수
@@ -483,8 +489,10 @@ void InitPlayer() {
 }
 
 
-void InitBuliding() {
+void InitBuliding(const char* objFilename) {
 	Building building;
+
+	read_obj_file(objFilename, &buildingModel);
 
 	building = { 2.0f, 0.0f, 1.0f, 1.0f};
 	g_buildings.push_back(building);
@@ -496,4 +504,29 @@ void InitBuliding() {
 	g_buildings.push_back(building);
 	building = { 3.0f, 0.0f, 3.0f, 1.5f };
 	g_buildings.push_back(building);
+
+
+	glGenVertexArrays(1, &buildVAO);
+	glGenBuffers(1, &buildVBO);
+	glGenBuffers(1, &buildEBO);
+
+	glBindVertexArray(buildVAO);
+
+	//VBO에 데이터 등록
+	glBindBuffer(GL_ARRAY_BUFFER, buildVBO);
+	glBufferData(GL_ARRAY_BUFFER, 3 * sizeof(buildingModel.vertices), buildingModel.vertices, GL_STATIC_DRAW);
+	cout << sizeof(buildingModel.vertices) << endl;
+
+	//EBO에 데이터 등록
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buildEBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(buildingModel.faces), buildingModel.faces, GL_STATIC_DRAW);
+	cout << sizeof(buildingModel.faces) << endl;
+
+
+	// 위치 속성 지정 (attribute 0)
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+
+	// VAO 언바인딩
+	glBindVertexArray(0);
 }
