@@ -80,7 +80,7 @@ std::vector<Enemy>g_enemies;
 
 typedef struct Building {
 	GLfloat x, y, z;
-	GLfloat scale;
+	Vertex scale;
 };
 std::vector<Building>g_buildings;
 Model buildingModel;
@@ -105,9 +105,9 @@ void setupCamera() {
 	//cameraDirection.y = cameraPos.y;
 	//cameraDirection.z = player.z + 2 * (radius * sin(glm::radians(player.angleXZ)));
 
-	cameraPos = vec3(1.0f, 150.0f, 0.0f);			//--- 카메라 위치
+	cameraPos = vec3(0.0f, 125.0f, 0.0f);			//--- 카메라 위치
 	cameraDirection = vec3(0.0f, 0.0f, 0.0f);	//--- 카메라 바라보는 방향
-	cameraUp = vec3(0.0f, 1.0f, 0.0f);			//--- 카메라 위쪽 방향
+	cameraUp = vec3(1.0f, 0.0f, 0.0f);			//--- 카메라 위쪽 방향
 
 	view = lookAt(cameraPos, cameraDirection, cameraUp);
 	projection = perspective(radians(45.0f), (float)WINDOW_X / (float)WINDOW_Y, 0.1f, 175.0f);
@@ -217,7 +217,7 @@ void PassiveMotion(int x, int y) {
 //--- 메인 함수
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 {
-	srand(NULL);
+	srand(time(NULL));
 	//--- 윈도우 생성하기
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
@@ -383,7 +383,7 @@ void drawBuliding(GLint modelLoc) {
 	for (int i = 0; i < g_buildings.size(); i++) {
 		buildingModelMat = mat4(1.0f);
 		buildingModelMat *= translate(buildingModelMat, vec3(g_buildings[i].x, g_buildings[i].y, g_buildings[i].z));
-		buildingModelMat *= scale(buildingModelMat, vec3(g_buildings[i].scale));
+		buildingModelMat *= scale(buildingModelMat, vec3(g_buildings[i].scale.x, g_buildings[i].scale.y, g_buildings[i].scale.z));
 
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(buildingModelMat));
 		glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 1.0f);
@@ -411,9 +411,9 @@ GLvoid drawScene() {
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(view));
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, value_ptr(projection));
 
-	//drawFloor(modelLoc);
-	//drawPlayer(modelLoc);
-	//drawEnemy(modelLoc);
+	drawFloor(modelLoc);
+	drawPlayer(modelLoc);
+	drawEnemy(modelLoc);
 	drawBuliding(modelLoc);
 	//--- 버퍼 스왑
 	glutSwapBuffers();
@@ -489,21 +489,39 @@ void InitPlayer() {
 }
 
 
+GLfloat GetRandomNumber(int seed) {
+	float result = (float)((float)rand() / RAND_MAX) * (seed * 11) - (seed * 5.5f);
+
+	return result;
+}
+
 void InitBuliding(const char* objFilename) {
 	Building building;
 
 	read_obj_file(objFilename, &buildingModel);
 
-	building = { 0.0f, 1.0f, 0.0f, 1.0f};
+	building = { 23.0f, 0.0f, -22.0f, 4.0f, 4.0f, 4.0f};
 	g_buildings.push_back(building);
-	building = { -2.0f, 0.0f, 2.0f, 2.0f };
+	building = { -10.0f, 0.0f, -12.0f, 8.0f, 4.0f, 4.0f};
 	g_buildings.push_back(building);
-	building = { 1.0f, 0.0f, -2.0f, 1.0f };
+	building = { 13.0f, 0.0f, 20.0f, 4.0f, 8.0f, 8.0f };
 	g_buildings.push_back(building);
-	building = { -2.0f, 0.0f, 1.0f, 2.0f };
+	building = { -9.0f, 0.0f, 8.0f, 4.0f, 4.0f, 8.0f };
 	g_buildings.push_back(building);
-	building = { 3.0f, 0.0f, 3.0f, 1.5f };
+	building = { 16.0f, 0.0f, -23.0f, 6.0f, 4.0f, 4.0f };
 	g_buildings.push_back(building);
+	building = { 13.0f, 0.0f, -16.0f, 4.0f, 4.0f, 4.0f };
+	g_buildings.push_back(building);
+	building = { -4.0f, 0.0f, 2.0f, 8.0f, 8.0f, 8.0f };
+	g_buildings.push_back(building);
+	building = { -5.0f, 0.0f, -10.0f, 4.0f, 4.0f, 4.0f };
+	g_buildings.push_back(building);
+	building = { -10.0f, 0.0f, 20.0f, 4.0f, 4.0f, 6.0f };
+	g_buildings.push_back(building);
+	building = { -22.0f, 0.0f, -14.0f, 6.0f, 8.0f, 2.0f };
+	g_buildings.push_back(building);
+
+
 
 
 	glGenVertexArrays(1, &buildVAO);
@@ -514,12 +532,12 @@ void InitBuliding(const char* objFilename) {
 
 	//VBO에 데이터 등록
 	glBindBuffer(GL_ARRAY_BUFFER, buildVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(buildingModel.vertices), buildingModel.vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, 40 * sizeof(buildingModel.vertices), buildingModel.vertices, GL_STATIC_DRAW);
 	cout << sizeof(buildingModel.vertices) << endl;
 
 	//EBO에 데이터 등록
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buildEBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(buildingModel.faces), buildingModel.faces, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 40 * sizeof(buildingModel.faces), buildingModel.faces, GL_STATIC_DRAW);
 	cout << sizeof(buildingModel.faces) << endl;
 
 
