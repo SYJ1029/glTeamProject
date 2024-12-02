@@ -1,6 +1,5 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-#include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <gl/glew.h>
@@ -12,6 +11,7 @@
 #include <gl/glm/glm/gtc/matrix_transform.hpp>
 #include <vector>
 #include "readObj.h"
+#include "shader.h"
 
 #define MAX_LINE_LENGTH 100
 #define M_PI 3.141592
@@ -22,39 +22,14 @@ using namespace glm;
 using namespace std;
 
 //--- 아래 5개 함수는 사용자 정의 함수
-void make_vertexShaders();
-void make_fragmentShaders();
-void make_shaderProgram();
 GLvoid drawScene();
 GLvoid Reshape(int w, int h);
 void InitFloor();
 void InitPlayer();
 void InitBuliding(const char* objFilename);
-char* filetobuf(const char* file)
-{
-	FILE* fptr;
-	long length;
-	char* buf;
-	fptr = fopen(file, "rb"); // Open file for reading 
-	if (!fptr) {	// Return NULL on failure 
-		perror("ERROR: 쉐이더 파일을 열 수 없습니다.");
-		return NULL;
-	}
-	fseek(fptr, 0, SEEK_END); // Seek to the end of the file 
-	length = ftell(fptr); // Find out how many bytes into the file we are 
-	buf = (char*)malloc(length + 1); // Allocate a buffer for the entire length of the file and a null terminator 
-	fseek(fptr, 0, SEEK_SET); // Go back to the beginning of the file 
-	fread(buf, length, 1, fptr); // Read the contents of the file in to the buffer 
-	fclose(fptr); // Close the file 
-	buf[length] = 0; // Null terminator 
-	return buf; // Return the buffer 
-}
 
 //--- 셰이더 변수 선언
 GLint width, height;
-GLchar* vertexSource, * fragmentSource; //--- 소스코드 저장 변수
-GLuint vertexShader, fragmentShader; //--- 세이더 객체
-GLuint shaderProgramID; //--- 셰이더 프로그램
 GLuint floorVAO, floorVBO, floorEBO;
 GLuint playerVAO, playerVBO, playerEBO;
 GLuint enemyVAO, enemyVBO, enemyEBO;
@@ -104,10 +79,6 @@ void setupCamera() {
 	cameraDirection.x = player.x + 2 * (radius * cos(glm::radians(player.angleXZ)));
 	cameraDirection.y = cameraPos.y;
 	cameraDirection.z = player.z + 2 * (radius * sin(glm::radians(player.angleXZ)));
-
-	//cameraPos = vec3(0.0f, 125.0f, 0.0f);			//--- 카메라 위치
-	//cameraDirection = vec3(0.0f, 0.0f, 0.0f);	//--- 카메라 바라보는 방향
-	//cameraUp = vec3(1.0f, 0.0f, 0.0f);			//--- 카메라 위쪽 방향
 
 	view = lookAt(cameraPos, cameraDirection, cameraUp);
 	projection = perspective(radians(45.0f), (float)WINDOW_X / (float)WINDOW_Y, 0.1f, 175.0f);
@@ -249,86 +220,12 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glutMainLoop();
 }
 
-//--- 버텍스 세이더 객체 만들기
-void make_vertexShaders()
-{
-	vertexSource = filetobuf("vertex.glsl");
-	if (!vertexSource) {
-		std::cerr << "ERROR: vertex shader 파일을 불러오지 못했습니다." << std::endl;
-	}
-	//--- 버텍스 세이더 객체 만들기
-	vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	//--- 세이더 코드를 세이더 객체에 넣기
-	glShaderSource(vertexShader, 1, (const GLchar**)&vertexSource, 0);
-	//--- 버텍스 세이더 컴파일하기
-	glCompileShader(vertexShader);
-	//checkCompileErrors(vertexShader, "VERTEX");
-	//--- 컴파일이 제대로 되지 않은 경우: 에러 체크
-	GLint result;
-	GLchar errorLog[512];
-	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &result);
-	if (!result)
-	{
-		glGetShaderInfoLog(vertexShader, 512, NULL, errorLog);
-		std::cerr << "ERROR: vertex shader 컴파일 실패\n" << errorLog << std::endl;
-		return;
-	}
-}
-
-//--- 프래그먼트 세이더 객체 만들기
-void make_fragmentShaders()
-{
-	fragmentSource = filetobuf("fragment.glsl");
-	if (!fragmentSource) {
-		std::cerr << "ERROR: fragment shader 파일을 불러오지 못했습니다." << std::endl;
-	}
-	//--- 프래그먼트 세이더 객체 만들기
-	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	//--- 세이더 코드를 세이더 객체에 넣기
-	glShaderSource(fragmentShader, 1, (const GLchar**)&fragmentSource, 0);
-	//--- 프래그먼트 세이더 컴파일
-	glCompileShader(fragmentShader);
-
-	GLint result;
-	GLchar errorLog[512];
-	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &result);
-	if (!result)
-	{
-		glGetShaderInfoLog(fragmentShader, 512, NULL, errorLog);
-		std::cerr << "ERROR: frag_shader 컴파일 실패\n" << errorLog << std::endl;
-		return;
-	}
-}
-
-//--- 세이더 프로그램 만들고 세이더 객체 링크하기
-void make_shaderProgram()
-{
-	make_vertexShaders(); //--- 버텍스 세이더 만들기
-	make_fragmentShaders(); //--- 프래그먼트 세이더 만들기
-
-	//-- shader Program
-	shaderProgramID = glCreateProgram();
-
-	glAttachShader(shaderProgramID, vertexShader);
-	glAttachShader(shaderProgramID, fragmentShader);
-	glLinkProgram(shaderProgramID);
-
-
-	//--- 세이더 삭제하기
-	glDeleteShader(vertexShader); //--- 세이더 객체를 세이더 프로그램에 링크했음으로, 세이더 객체 자체는 삭제 가능
-	glDeleteShader(fragmentShader);
-
-	//--- Shader Program 사용하기
-	glUseProgram(shaderProgramID);
-}
-
 void drawFloor(GLint modelLoc) {
 	// 바닥
 	glBindVertexArray(floorVAO);
 	mat4 floorModel = mat4(1.0f); // 모델 행렬 (변환 없음)
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(floorModel));
 
-	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.8f, 0.5f);
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);	
 }
@@ -399,6 +296,11 @@ GLvoid drawScene() {
 	//--- 셰이더 프로그램 활성화
 	glUseProgram(shaderProgramID);
 
+	//--- 조명
+	glUniform3f(glGetUniformLocation(shaderProgramID, "lightPos"), 0.0f, 100.0f, 0.0f); // 조명 위치 고정
+	glUniform3f(glGetUniformLocation(shaderProgramID, "lightColor"), 1.0f, 1.0f, 1.0f); // 조명 색상
+	glUniform3f(glGetUniformLocation(shaderProgramID, "viewPos"), cameraPos.x, cameraPos.y, cameraPos.z); // 카메라 위치
+
 	// 그리기
 	GLint modelLoc = glGetUniformLocation(shaderProgramID, "model");
 	GLint viewLoc = glGetUniformLocation(shaderProgramID, "view");
@@ -416,7 +318,7 @@ GLvoid drawScene() {
 	// 미니맵
 	glViewport(WINDOW_X * 3 / 4, WINDOW_Y * 3 / 4, WINDOW_X / 4, WINDOW_Y / 4); // 오른쪽 위
 	vec3 bodyModelPosV2 = vec3(player.x, 0.0f, player.z); // bodyModel의 대략적인 위치
-	vec3 cameraPosV2 = vec3(player.x, 50.0f, player.z);
+	vec3 cameraPosV2 = vec3(player.x, 150.0f, player.z);
 	mat4 bodyViewV2 = lookAt(cameraPosV2, bodyModelPosV2, vec3(1.0f, 0.0f, 0.0f)); // bodyModel을 바라보는 뷰 행렬
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(bodyViewV2));
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, value_ptr(projection));
@@ -439,36 +341,44 @@ void InitFloor() {
 	// 바닥 정점 데이터
 	GLfloat floorVertices[] = {
 		// Positions          // Colors
-		-50.0f, 0.0f, -50.0f,//   0.5f, 0.5f, 0.5f, // Bottom-left
-		 50.0f, 0.0f, -50.0f,//   0.5f, 0.5f, 0.5f, // Bottom-right
-		-50.0f, 0.0f,  50.0f,//   0.5f, 0.5f, 0.5f, // Top-left
-		 50.0f, 0.0f,  50.0f,//   0.5f, 0.5f, 0.5f  // Top-right
+		-50.0f, 0.0f, -50.0f, 1.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f,
+		 50.0f, 0.0f, -50.0f, 0.0f, 1.0f, 0.0f, 0.0f, -1.0f, 0.0f,
+		 50.0f, 0.0f,  50.0f, 0.0f, 1.0f, 1.0f, 0.0f, -1.0f, 0.0f,
+		-50.0f, 0.0f,  50.0f, 1.0f, 0.0f, 1.0f, 0.0f, -1.0f, 0.0f,
 	};
 
 	// 바닥의 인덱스 데이터
 	GLuint floorIndices[] = {
 		0, 1, 2, // 첫 번째 삼각형
-		1, 3, 2  // 두 번째 삼각형
+		0, 3, 2  // 두 번째 삼각형
 	};
 
 	// VAO 생성 및 바인딩
 	glGenVertexArrays(1, &floorVAO);
-	glGenBuffers(1, &floorVBO);
-	glGenBuffers(1, &floorEBO);
-
 	glBindVertexArray(floorVAO);
 
-	// VBO에 데이터 업로드
+	// VBO 생성 및 데이터 전송
+	glGenBuffers(1, &floorVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, floorVBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(floorVertices), floorVertices, GL_STATIC_DRAW);
 
-	// EBO에 데이터 업로드
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, floorEBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(floorIndices), floorIndices, GL_STATIC_DRAW);
+	// EBO (Element Buffer Object) 생성 및 데이터 전송
+	GLuint ebo;
+	glGenBuffers(1, &ebo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(floorIndices),floorIndices, GL_STATIC_DRAW);
 
-	// 위치 속성 지정 (attribute 0)
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	// 위치 속성 (attribute 0)
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), (GLvoid*)0);
 	glEnableVertexAttribArray(0);
+
+	// 색상 속성 (attribute 1)
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+	glEnableVertexAttribArray(1);
+
+	// 법선 속성 (attribute 2)
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), (GLvoid*)(6 * sizeof(GLfloat)));
+	glEnableVertexAttribArray(2);
 
 	// VAO 언바인딩
 	glBindVertexArray(0);

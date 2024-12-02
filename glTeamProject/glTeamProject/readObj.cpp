@@ -1,17 +1,6 @@
 #pragma once
 
-
 #include "readObj.h"
-
-#define MAX_LINE_LENGTH 100
-#define M_PI 3.141592
-#define WINDOW_X 800
-#define WINDOW_Y 600
-
-using namespace glm;
-
-
-
 
 void read_obj_file(const char* filename, Model* model) {
 	FILE* file;
