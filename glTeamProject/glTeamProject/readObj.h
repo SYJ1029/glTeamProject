@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,14 +21,19 @@ using namespace glm;
 
 
 
-class GL_Cylinder {
+typedef struct {
+	float x, y, z;
+} Vertex;
 
+typedef struct {
+	unsigned int v1, v2, v3;
+} Face;
 
+typedef struct {
+	Vertex* vertices;
+	size_t vertex_count;
+	Face* faces;
+	size_t face_count;
+} Model;
 
-};
-
-
-class Enemy {
-
-
-};
+void read_obj_file(const char* filename, Model* model);
