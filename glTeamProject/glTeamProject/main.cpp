@@ -2,10 +2,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <gl/glew.h>
-#include <gl/freeglut.h>
 #include <time.h>
 #include <math.h>
+#include <gl/glew.h>
+#include <gl/freeglut.h>
 #include <gl/glm/glm/glm.hpp>
 #include <gl/glm/glm/ext.hpp>
 #include <gl/glm/glm/gtc/matrix_transform.hpp>
@@ -64,10 +64,14 @@ int numBuild = 10;
 float prevMouseX, prevMouseY;
 float deltaX = 0.0f, deltaY = 0.0f;
 
-vec3 cameraPos = vec3(0.0f, 8.0f, 0.0f);			//--- 카메라 위치
+vec3 cameraPos = vec3(0.0f, 8.0f, 0.0f);		//--- 카메라 위치
 vec3 cameraDirection = vec3(0.0f, 0.0f, 0.0f);	//--- 카메라 바라보는 방향
 vec3 cameraUp = vec3(0.0f, 1.0f, 0.0f);			//--- 카메라 위쪽 방향
 float rotationSpeed = 1.0f;						// 카메라 회전 속도 (deg/sec)
+
+vec3 lightPos = vec3(0.0f, 200.0f, 0.0f);
+float lightAngle = 0.0f;
+float lightRadius = 200.0f;
 
 void setupCamera() {
 	float radius = 1.0f;
@@ -86,15 +90,28 @@ void setupCamera() {
 
 // 타이머 함수
 void timerFunc(int value) {
+	// 플레이어 카메라 업데이트
 	vec3 direction = normalize(vec3(
 		cos(glm::radians(player.angleXZ)),  // X축 성분
 		0.0f,                              // Y축 (고정)
 		sin(glm::radians(player.angleXZ))  // Z축 성분
 	));
-
 	player.x += player.dx * direction.x - player.dz * direction.z;
 	player.z += player.dx * direction.z + player.dz * direction.x;
 	//player.y += player.dy;
+
+	// 조명 위치 업데이트
+	lightAngle += 1.0f; // 회전 속도 (deg/frame)
+	if (lightAngle >= 360.0f) lightAngle -= 360.0f;
+	float ambientLight = 1.0f - 0.8f * (sin(glm::radians(lightAngle/2)));
+	// 조명의 위치를 계산
+	lightPos.y = lightRadius * cos(glm::radians(lightAngle));
+	lightPos.z = lightRadius * sin(glm::radians(lightAngle));
+	glUniform3f(glGetUniformLocation(shaderProgramID, "lightPos"), lightPos.x, lightPos.y, lightPos.z); // 조명 위치 고정
+	glUniform1f(glGetUniformLocation(shaderProgramID, "ambientLight"), ambientLight); // 주변광
+
+	float skyColor = 1.0 - (1.0f * (sin(glm::radians(lightAngle / 2))));
+	glClearColor(0.0, skyColor, skyColor, 1.0f);
 
 	setupCamera();
 	glutPostRedisplay();
@@ -223,7 +240,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 void drawFloor(GLint modelLoc) {
 	// 바닥
 	glBindVertexArray(floorVAO);
-	mat4 floorModel = mat4(1.0f); // 모델 행렬 (변환 없음)
+	mat4 floorModel = mat4(1.0f); // 모델 행렬
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(floorModel));
 
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -290,16 +307,16 @@ void drawBuliding(GLint modelLoc) {
 //--- 출력 콜백 함수
 GLvoid drawScene() {
 	//--- 배경색 설정 및 버퍼 클리어
-	glClearColor(1.0, 1.0, 1.0, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	//--- 셰이더 프로그램 활성화
 	glUseProgram(shaderProgramID);
 
 	//--- 조명
-	glUniform3f(glGetUniformLocation(shaderProgramID, "lightPos"), 0.0f, 100.0f, 0.0f); // 조명 위치 고정
+	glUniform3f(glGetUniformLocation(shaderProgramID, "lightPos"), lightPos.x, lightPos.y, lightPos.z); // 조명 위치 고정
 	glUniform3f(glGetUniformLocation(shaderProgramID, "lightColor"), 1.0f, 1.0f, 1.0f); // 조명 색상
 	glUniform3f(glGetUniformLocation(shaderProgramID, "viewPos"), cameraPos.x, cameraPos.y, cameraPos.z); // 카메라 위치
+	glUniform1f(glGetUniformLocation(shaderProgramID, "ambientLight"), 0.2f); // 주변광
 
 	// 그리기
 	GLint modelLoc = glGetUniformLocation(shaderProgramID, "model");
@@ -341,10 +358,10 @@ void InitFloor() {
 	// 바닥 정점 데이터
 	GLfloat floorVertices[] = {
 		// Positions          // Colors
-		-50.0f, 0.0f, -50.0f, 1.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f,
-		 50.0f, 0.0f, -50.0f, 0.0f, 1.0f, 0.0f, 0.0f, -1.0f, 0.0f,
-		 50.0f, 0.0f,  50.0f, 0.0f, 1.0f, 1.0f, 0.0f, -1.0f, 0.0f,
-		-50.0f, 0.0f,  50.0f, 1.0f, 0.0f, 1.0f, 0.0f, -1.0f, 0.0f,
+		-50.0f, 0.0f, -50.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+		 50.0f, 0.0f, -50.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+		 50.0f, 0.0f,  50.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+		-50.0f, 0.0f,  50.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
 	};
 
 	// 바닥의 인덱스 데이터

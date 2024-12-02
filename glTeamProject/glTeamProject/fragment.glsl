@@ -9,10 +9,10 @@ out vec4 FragColor;
 uniform vec3 lightPos;   // 월드 좌표에서의 조명 위치
 uniform vec3 lightColor; // 조명 색상
 uniform vec3 viewPos;    // 월드 좌표에서의 카메라 위치
+uniform float ambientLight; // 주변광
 
 void main() {
     // Ambient lighting
-    float ambientLight = 0.2;
     vec3 ambient = ambientLight * lightColor;
 
     // Diffuse lighting
