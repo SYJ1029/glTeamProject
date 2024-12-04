@@ -24,7 +24,9 @@ GLvoid Reshape(int w, int h);
 void InitFloor();
 void InitPlayer();
 void InitBuliding(const char* objFilename);
-
+void shootBullet();
+void drawBullets(GLint modelLoc);
+void updateBullets();
 //--- 셰이더 변수 선언
 GLint width, height;
 GLuint floorVAO, floorVBO, floorEBO;
@@ -57,6 +59,13 @@ typedef struct Building {
 std::vector<Building>g_buildings;
 Model buildingModel;
 int numBuild = 10;
+
+typedef struct Bullet {
+	GLfloat x, y, z;
+	GLfloat dx, dy, dz;
+	GLfloat speed;
+};
+std::vector<Bullet>g_bullets;
 
 float prevMouseX, prevMouseY;
 float deltaX = 0.0f, deltaY = 0.0f;
@@ -109,6 +118,7 @@ void timerFunc(int value) {
 
 	skyColor = 1.0 - (1.0f * (sin(glm::radians(lightAngle / 2))));
 
+	updateBullets();
 	setupCamera();
 	glutPostRedisplay();
 	glutTimerFunc(30, timerFunc, 0);
@@ -156,7 +166,7 @@ void keyboardUp(unsigned char key, int x, int y) {
 void Mouse(int button, int state, int x, int y) {
 	if (button == GLUT_LEFT_BUTTON) {
 		if (state == GLUT_DOWN) {
-
+			shootBullet();
 		}
 		else if (state == GLUT_UP) {
 
@@ -333,6 +343,8 @@ GLvoid drawScene() {
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 	drawBuliding(modelLoc);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
+	drawBullets(modelLoc);
+	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 
 	// 미니맵
 	glViewport(WINDOW_X * 3 / 4, WINDOW_Y * 3 / 4, WINDOW_X / 4, WINDOW_Y / 4); // 오른쪽 위
@@ -408,18 +420,11 @@ void InitFloor() {
 }
 
 void InitPlayer() {
-	// 플레이어의 VAO 생성
-	glGenVertexArrays(1, &playerVAO);
-	glBindVertexArray(playerVAO);
-
 	// 플레이어 모델용 Quadric 생성
 	qobj = gluNewQuadric();
 	gluQuadricDrawStyle(qobj, GLU_FILL);
 	gluQuadricNormals(qobj, GLU_SMOOTH);
 	gluQuadricOrientation(qobj, GLU_OUTSIDE);
-
-	// 필요하면 추가 데이터 생성 및 업로드
-	// 현재는 gluCylinder와 gluSphere를 사용하므로 별도 VBO/EBO가 필요하지 않을 수 있습니다.
 	
 	glBindVertexArray(0); // VAO 언바인딩
 	player.x = 0.0f;
@@ -490,5 +495,56 @@ void InitBuliding(const char* objFilename) {
 	glEnableVertexAttribArray(0);
 
 	// VAO 언바인딩
+	glBindVertexArray(0);
+}
+
+void shootBullet() {
+	Bullet newBullet;
+	vec3 direction = normalize(vec3(
+		cos(glm::radians(player.angleXZ)), // X축 방향
+		0.0f,                              // Y축 (수평)
+		sin(glm::radians(player.angleXZ))  // Z축 방향
+	));
+
+	newBullet = { player.x, player.y + 1.95f, player.z };
+
+	newBullet.dx = direction.x;
+	newBullet.dy = direction.y;
+	newBullet.dz = direction.z;
+
+	newBullet.speed = 0.8f;
+
+	g_bullets.push_back(newBullet);
+}
+
+void updateBullets() {
+	for (int i = 0; i < g_bullets.size(); i++) {
+		g_bullets[i].x += g_bullets[i].dx * g_bullets[i].speed;
+		g_bullets[i].y += g_bullets[i].dy * g_bullets[i].speed;
+		g_bullets[i].z += g_bullets[i].dz * g_bullets[i].speed;
+
+		if (g_bullets[i].x > 100.0f || g_bullets[i].x < -100.0f ||
+			g_bullets[i].z > 100.0f || g_bullets[i].z < -100.0f) {
+			g_bullets.erase(g_bullets.begin() + i);
+			i--;
+		}
+	}
+}
+
+void drawBullets(GLint modelLoc) {
+	float radius = 0.1f;
+	glBindVertexArray(sphereVAO);
+
+	mat4 bulletModel;
+	for (const Bullet& bullet : g_bullets) {
+		bulletModel = mat4(1.0f);
+		bulletModel = translate(bulletModel, vec3(bullet.x + radius * glm::cos(radians(player.angleXZ + 90.0f)), bullet.y, bullet.z + radius * glm::sin(radians(player.angleXZ + 90.0f))));
+		bulletModel = scale(bulletModel, vec3(0.01f, 0.01f, 0.01f)); // 총알 크기 조정
+
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(bulletModel));
+		glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 1.0f, 1.0f, 0.0f); // 노란색 총알
+
+		glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
+	}
 	glBindVertexArray(0);
 }
