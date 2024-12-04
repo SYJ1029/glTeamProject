@@ -10,6 +10,7 @@ uniform vec3 lightPos;   // 월드 좌표에서의 조명 위치
 uniform vec3 lightColor; // 조명 색상
 uniform vec3 viewPos;    // 월드 좌표에서의 카메라 위치
 uniform float ambientLight; // 주변광
+uniform vec3 objectColor;   // 색상값
 
 void main() {
     // Ambient lighting
@@ -30,7 +31,9 @@ void main() {
     specularLight = pow(specularLight, shininess);
     vec3 specular = specularStrength * specularLight * lightColor;
 
+    vec3 finalColor = (objectColor != vec3(0.0, 0.0, 0.0)) ? objectColor : VertexColor;
+
     // Combine lighting components
-    vec3 result = (ambient + diffuse + specular) * VertexColor;
+    vec3 result = (ambient + diffuse + specular) * finalColor;
     FragColor = vec4(result, 1.0);
 }

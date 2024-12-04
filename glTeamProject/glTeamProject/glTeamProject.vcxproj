@@ -129,9 +129,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Hexahedron.cpp" />
     <ClCompile Include="readObj.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="shader.cpp" />
+    <ClCompile Include="sphere.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="fragment.glsl" />
@@ -144,8 +146,10 @@
     </Object>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Hexahedron.h" />
     <ClInclude Include="readObj.h" />
     <ClInclude Include="shader.h" />
+    <ClInclude Include="sphere.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -12,11 +12,8 @@
 #include <vector>
 #include "readObj.h"
 #include "shader.h"
-
-#define MAX_LINE_LENGTH 100
-#define M_PI 3.141592
-#define WINDOW_X 800
-#define WINDOW_Y 600
+#include "sphere.h"
+#include "Hexahedron.h"
 
 using namespace glm;
 using namespace std;
@@ -72,6 +69,8 @@ float rotationSpeed = 1.0f;						// 카메라 회전 속도 (deg/sec)
 vec3 lightPos = vec3(0.0f, 200.0f, 0.0f);
 float lightAngle = 0.0f;
 float lightRadius = 200.0f;
+float skyColor = 1.0f;
+float ambientLight = 0.5f;
 
 void setupCamera() {
 	float radius = 1.0f;
@@ -101,21 +100,18 @@ void timerFunc(int value) {
 	//player.y += player.dy;
 
 	// 조명 위치 업데이트
-	lightAngle += 1.0f; // 회전 속도 (deg/frame)
+	lightAngle += 0.1f; // 회전 속도 (deg/frame)
 	if (lightAngle >= 360.0f) lightAngle -= 360.0f;
-	float ambientLight = 1.0f - 0.8f * (sin(glm::radians(lightAngle/2)));
+	ambientLight = 0.5f - 0.3f * (sin(glm::radians(lightAngle/2)));
 	// 조명의 위치를 계산
 	lightPos.y = lightRadius * cos(glm::radians(lightAngle));
 	lightPos.z = lightRadius * sin(glm::radians(lightAngle));
-	glUniform3f(glGetUniformLocation(shaderProgramID, "lightPos"), lightPos.x, lightPos.y, lightPos.z); // 조명 위치 고정
-	glUniform1f(glGetUniformLocation(shaderProgramID, "ambientLight"), ambientLight); // 주변광
 
-	float skyColor = 1.0 - (1.0f * (sin(glm::radians(lightAngle / 2))));
-	glClearColor(0.0, skyColor, skyColor, 1.0f);
+	skyColor = 1.0 - (1.0f * (sin(glm::radians(lightAngle / 2))));
 
 	setupCamera();
 	glutPostRedisplay();
-	glutTimerFunc(100, timerFunc, 0);
+	glutTimerFunc(30, timerFunc, 0);
 }
 
 void keyboard(unsigned char key, int x, int y) {
@@ -221,6 +217,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	make_shaderProgram();
 	InitPlayer();
 	InitFloor();
+	initSphereBuffer(0.8f, 20, 20);
 	InitBuliding("obj.obj");
 	setupCamera();
 	glEnable(GL_DEPTH_TEST);
@@ -233,7 +230,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glutMouseFunc(Mouse);
 	//glutMotionFunc(Motion);
 	glutPassiveMotionFunc(PassiveMotion);
-	glutTimerFunc(1000, timerFunc, 0);
+	glutTimerFunc(30, timerFunc, 0);
 	glutMainLoop();
 }
 
@@ -248,19 +245,20 @@ void drawFloor(GLint modelLoc) {
 }
 
 void drawPlayer(GLint modelLoc) {
-	mat4 playerModelMat = mat4(1.0f); // 플레이어 모델 행렬
+	glBindVertexArray(sphereVAO);
 
-	playerModelMat = glm::translate(playerModelMat, vec3(player.x, player.y, player.z));
-	playerModelMat = glm::rotate(playerModelMat, glm::radians(-90.0f), vec3(1.0f, 0.0f, 0.0f));
+	mat4 playerModelMat = mat4(1.0f); // 플레이어 모델 행렬
+	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 1.0f,0.0f,0.0f);
+
+	playerModelMat = glm::translate(playerModelMat, vec3(player.x, player.y + 2.0f, player.z));
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(playerModelMat));
-	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 1.0f, 0.8f, 0.5f);
+	glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
+
+	playerModelMat = glm::rotate(playerModelMat, glm::radians(-90.0f), vec3(1.0f, 0.0f, 0.0f));
+	playerModelMat = glm::translate(playerModelMat, vec3(0.0f, 0.0f, -2.0f));
+	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(playerModelMat));
 	gluCylinder(qobj, 1.0, 0.3, 1.5, 20, 8);
 
-	playerModelMat = glm::translate(playerModelMat, vec3(0.0f, 0.0f, 2.0f));
-	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(playerModelMat));
-	gluSphere(qobj, 0.8, 50, 50);
-
-	glBindVertexArray(playerVAO);
 	glBindVertexArray(0); // VAO 언바인딩
 }
 
@@ -308,6 +306,7 @@ void drawBuliding(GLint modelLoc) {
 GLvoid drawScene() {
 	//--- 배경색 설정 및 버퍼 클리어
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClearColor(0.0, skyColor, skyColor, 1.0f);
 
 	//--- 셰이더 프로그램 활성화
 	glUseProgram(shaderProgramID);
@@ -316,7 +315,7 @@ GLvoid drawScene() {
 	glUniform3f(glGetUniformLocation(shaderProgramID, "lightPos"), lightPos.x, lightPos.y, lightPos.z); // 조명 위치 고정
 	glUniform3f(glGetUniformLocation(shaderProgramID, "lightColor"), 1.0f, 1.0f, 1.0f); // 조명 색상
 	glUniform3f(glGetUniformLocation(shaderProgramID, "viewPos"), cameraPos.x, cameraPos.y, cameraPos.z); // 카메라 위치
-	glUniform1f(glGetUniformLocation(shaderProgramID, "ambientLight"), 0.2f); // 주변광
+	glUniform1f(glGetUniformLocation(shaderProgramID, "ambientLight"), ambientLight); // 주변광
 
 	// 그리기
 	GLint modelLoc = glGetUniformLocation(shaderProgramID, "model");
@@ -329,21 +328,28 @@ GLvoid drawScene() {
 
 	drawFloor(modelLoc);
 	drawPlayer(modelLoc);
+	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 	drawEnemy(modelLoc);
+	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 	drawBuliding(modelLoc);
+	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 
 	// 미니맵
 	glViewport(WINDOW_X * 3 / 4, WINDOW_Y * 3 / 4, WINDOW_X / 4, WINDOW_Y / 4); // 오른쪽 위
 	vec3 bodyModelPosV2 = vec3(player.x, 0.0f, player.z); // bodyModel의 대략적인 위치
-	vec3 cameraPosV2 = vec3(player.x, 150.0f, player.z);
+	vec3 cameraPosV2 = vec3(player.x, 10.0f, player.z);
 	mat4 bodyViewV2 = lookAt(cameraPosV2, bodyModelPosV2, vec3(1.0f, 0.0f, 0.0f)); // bodyModel을 바라보는 뷰 행렬
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(bodyViewV2));
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, value_ptr(projection));
 
 	drawFloor(modelLoc);
 	drawPlayer(modelLoc);
+	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 	drawEnemy(modelLoc);
+	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 	drawBuliding(modelLoc);
+	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
+
 
 	//--- 버퍼 스왑
 	glutSwapBuffers();
@@ -414,7 +420,7 @@ void InitPlayer() {
 
 	// 필요하면 추가 데이터 생성 및 업로드
 	// 현재는 gluCylinder와 gluSphere를 사용하므로 별도 VBO/EBO가 필요하지 않을 수 있습니다.
-
+	
 	glBindVertexArray(0); // VAO 언바인딩
 	player.x = 0.0f;
 	player.y = 0.0f;
