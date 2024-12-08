@@ -148,16 +148,16 @@ void keyboard(unsigned char key, int x, int y) {
 void keyboardUp(unsigned char key, int x, int y) {
 	switch (key) {
 	case 'w':
-		player.dx -= 0.3f;
+		player.dx = 0.0f;
 		break;
 	case 'a':
-		player.dz += 0.3f;
+		player.dz = 0.0f;
 		break;
 	case 's':
-		player.dx += 0.3f;
+		player.dx = 0.0f;
 		break;
 	case 'd':
-		player.dz -= 0.3f;
+		player.dz = 0.0f;
 		break;
 	}
 	glutPostRedisplay();
@@ -180,32 +180,22 @@ void Motion(int x, int y) {
 }
 
 void PassiveMotion(int x, int y) {
-	float mouseX = (2.0f * x / WINDOW_X) - 1.0f;
-	float mouseY = 1.0f - (2.0f * y / WINDOW_Y);
+	int centerX = WINDOW_X / 2;
+	int centerY = WINDOW_Y / 2;
 
-	static bool firstMouse = true;
-	if (firstMouse) {
-		prevMouseX = mouseX;
-		prevMouseY = mouseY;
-		firstMouse = false; // 이후부터는 초기화 불필요
-		return; // 초기화 후 첫 계산을 건너뜀
+	if (x != centerX || y != centerY) {
+		deltaX = (float)(x - centerX);
+		deltaY = (float)(y - centerY);
+
+		float angleIncrement = 0.1f;
+		player.angleXZ += deltaX * angleIncrement;
+
+		if (player.angleXZ >= 360.0f) player.angleXZ -= 360.0f;
+		if (player.angleXZ < 0.0f) player.angleXZ += 360.0f;
+
+		// 마우스 포인터를 화면 중앙으로 워핑
+		glutWarpPointer(centerX, centerY);
 	}
-
-	deltaX = mouseX - prevMouseX;
-	deltaY = mouseY - prevMouseY;
-
-	float angleIncrement = 90.0f;
-	player.angleXZ += deltaX * angleIncrement;
-
-	if (player.angleXZ >= 360.0f) player.angleXZ -= 360.0f;
-	if (player.angleXZ < 0.0f) player.angleXZ += 360.0f;
-
-	prevMouseX = mouseX;
-	prevMouseY = mouseY;
-
-	printf("Mouse moved: deltaX = %.3f, player.angleXZ = %.3f\r", deltaX, player.angleXZ);
-
-	glutPostRedisplay();
 }
 
 //--- 메인 함수
