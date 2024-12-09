@@ -30,6 +30,9 @@
     <ClCompile Include="Hexahedron.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="rwTile.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="vertex.glsl" />
@@ -49,6 +52,9 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Hexahedron.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="rwTile.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
