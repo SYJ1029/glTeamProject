@@ -132,6 +132,7 @@
     <ClCompile Include="Hexahedron.cpp" />
     <ClCompile Include="readObj.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="rwTile.cpp" />
     <ClCompile Include="shader.cpp" />
     <ClCompile Include="sphere.cpp" />
   </ItemGroup>
@@ -148,6 +149,7 @@
   <ItemGroup>
     <ClInclude Include="Hexahedron.h" />
     <ClInclude Include="readObj.h" />
+    <ClInclude Include="rwTile.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="sphere.h" />
   </ItemGroup>

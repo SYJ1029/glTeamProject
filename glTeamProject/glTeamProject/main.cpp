@@ -11,6 +11,7 @@
 #include <gl/glm/glm/gtc/matrix_transform.hpp>
 #include <vector>
 #include "readObj.h"
+#include "rwTile.h"
 #include "shader.h"
 #include "sphere.h"
 #include "Hexahedron.h"
@@ -52,6 +53,7 @@ typedef struct Enemy {
 	GLfloat x, y, z;
 	GLfloat dx, dy, dz;
 	GLfloat angleX, angleY, angleZ;
+	GLfloat speed;
 };
 std::vector<Enemy>g_enemies;
 int genEnemyInterval = 5000;
@@ -62,7 +64,9 @@ typedef struct Building {
 };
 std::vector<Building>g_buildings;
 Model buildingModel;
-int numBuild = 10;
+int numBuild = 30;
+int** maptile;
+int tilerow = 40, tilecolumn = 40;
 
 typedef struct Bullet {
 	GLfloat x, y, z;
@@ -323,14 +327,17 @@ void drawBuliding(GLint modelLoc) {
 	mat4 buildingModelMat = mat4(1.0f);
 	glBindVertexArray(buildVAO);
 	for (int i = 0; i < g_buildings.size(); i++) {
-		buildingModelMat = mat4(1.0f);
-		buildingModelMat *= translate(buildingModelMat, vec3(g_buildings[i].x, g_buildings[i].y, g_buildings[i].z));
-		buildingModelMat *= scale(buildingModelMat, vec3(g_buildings[i].scale.x, g_buildings[i].scale.y, g_buildings[i].scale.z));
+		if (g_buildings[i].x >= -50.0f && g_buildings[i].x <= 50.0f &&
+			g_buildings[i].z >= -50.0f && g_buildings[i].z <= 50.0f) {
+			buildingModelMat = mat4(1.0f);
+			buildingModelMat *= translate(buildingModelMat, vec3(g_buildings[i].x, g_buildings[i].y, g_buildings[i].z));
+			buildingModelMat *= scale(buildingModelMat, vec3(g_buildings[i].scale.x, g_buildings[i].scale.y, g_buildings[i].scale.z));
 
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(buildingModelMat));
-		glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 1.0f);
+			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(buildingModelMat));
+			glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 1.0f);
 
-		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+			glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+		}
 	}
 
 	glBindVertexArray(0);
@@ -481,42 +488,64 @@ void InitEnemy() {
 	newenemy.x += player.x;
 	newenemy.z += player.z;
 
+	newenemy.speed = 0.01f;
+
 	g_enemies.push_back(newenemy); // 리스트에 추가
 }
 
 void MoveEnemy() {
+	float dx = 0, dz = 0;
+	for (int i = 0; i < g_enemies.size(); i++) {
+		dx = player.x - g_enemies[i].x;
+		dz = player.z - g_enemies[i].z;
 
+		g_enemies[i].x = g_enemies[i].x + dx * g_enemies[i].speed;
+		g_enemies[i].z = g_enemies[i].z + dz * g_enemies[i].speed;
+	}
 }
 
 void DeleteEnemy(int index) {
 	g_enemies.erase(g_enemies.begin() + index);
 }
 
+void SetTile() {
+	int i = -1;
+	int j = -1;
+
+	while (true) {
+		i = (int)((float)rand() / RAND_MAX * (tilerow - 1));
+		j = (int)((float)rand() / RAND_MAX * (tilecolumn - 1));
+
+		if (maptile[i][j] <= 0) {
+			maptile[i][j] = 1;
+
+			break;
+		}
+	} 
+
+}
+
+
 void InitBuliding(const char* objFilename) {
+	maptile = InitTileArr(maptile, tilerow, tilecolumn);
+
+	for (int i = 0; i < numBuild; i++) {
+		SetTile();
+	}
+
+
 	Building building;
 
 	read_obj_file(objFilename, &buildingModel);
 
-	building = { 23.0f, 0.0f, -22.0f, 4.0f, 4.0f, 4.0f};
-	g_buildings.push_back(building);
-	building = { -10.0f, 0.0f, -12.0f, 8.0f, 4.0f, 4.0f};
-	g_buildings.push_back(building);
-	building = { 13.0f, 0.0f, 20.0f, 4.0f, 8.0f, 8.0f };
-	g_buildings.push_back(building);
-	building = { -9.0f, 0.0f, 8.0f, 4.0f, 4.0f, 8.0f };
-	g_buildings.push_back(building);
-	building = { 16.0f, 0.0f, -23.0f, 6.0f, 4.0f, 4.0f };
-	g_buildings.push_back(building);
-	building = { 13.0f, 0.0f, -16.0f, 4.0f, 4.0f, 4.0f };
-	g_buildings.push_back(building);
-	building = { -4.0f, 0.0f, 2.0f, 8.0f, 8.0f, 8.0f };
-	g_buildings.push_back(building);
-	building = { -5.0f, 0.0f, -10.0f, 4.0f, 4.0f, 4.0f };
-	g_buildings.push_back(building);
-	building = { -10.0f, 0.0f, 20.0f, 4.0f, 4.0f, 6.0f };
-	g_buildings.push_back(building);
-	building = { -22.0f, 0.0f, -14.0f, 6.0f, 8.0f, 2.0f };
-	g_buildings.push_back(building);
+	for (int i = 0; i < tilerow; i++) {
+		for (int j = 0; j < tilecolumn; j++) {
+			if (maptile[i][j] > 0) {
+				building = { (float)i * 5 - 100.0f, 0.0f, (float)j * 5 - 100.0f, 5.0f, 10.0f, 5.0f };
+				g_buildings.push_back(building);
+			}
+		}
+	}
 
 
 
