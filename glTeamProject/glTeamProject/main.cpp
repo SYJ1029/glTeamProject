@@ -26,6 +26,8 @@ using namespace std;
 GLvoid drawScene();
 GLvoid Reshape(int w, int h);
 void InitBuliding(const char* objFilename);
+void InitEnemy();
+void MoveEnemy();
 //--- 셰이더 변수 선언
 GLint width, height;
 GLuint enemyVAO, enemyVBO, enemyEBO;
@@ -100,6 +102,7 @@ void timerFunc(int value) {
 	skyColor = 1.0 - (1.0f * (sin(glm::radians(lightAngle / 2))));
 
 	updateBullets(g_bullets);
+	MoveEnemy();
 	setupCamera();
 	glutPostRedisplay();
 	glutTimerFunc(30, timerFunc, 0);
