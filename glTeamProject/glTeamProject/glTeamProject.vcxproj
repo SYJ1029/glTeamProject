@@ -129,7 +129,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="bullet.cpp" />
+    <ClCompile Include="floor.cpp" />
     <ClCompile Include="Hexahedron.cpp" />
+    <ClCompile Include="player.cpp" />
     <ClCompile Include="readObj.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="rwTile.cpp" />
@@ -147,7 +150,10 @@
     </Object>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="bullet.h" />
+    <ClInclude Include="floor.h" />
     <ClInclude Include="Hexahedron.h" />
+    <ClInclude Include="player.h" />
     <ClInclude Include="readObj.h" />
     <ClInclude Include="rwTile.h" />
     <ClInclude Include="shader.h" />
