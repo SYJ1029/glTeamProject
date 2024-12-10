@@ -11,6 +11,7 @@
 #include <gl/glm/glm/gtc/matrix_transform.hpp>
 #include <vector>
 #include "readObj.h"
+#include "rwTile.h"
 #include "shader.h"
 #include "sphere.h"
 #include "Hexahedron.h"
@@ -37,9 +38,12 @@ Player player;
 
 typedef struct Enemy {
 	GLfloat x, y, z;
-	// GLfloat angle;
+	GLfloat dx, dy, dz;
+	GLfloat angleX, angleY, angleZ;
+	GLfloat speed;
 };
 std::vector<Enemy>g_enemies;
+int genEnemyInterval = 5000;
 
 typedef struct Building {
 	GLfloat x, y, z;
@@ -47,7 +51,9 @@ typedef struct Building {
 };
 std::vector<Building>g_buildings;
 Model buildingModel;
-int numBuild = 10;
+int numBuild = 30;
+int** maptile;
+int tilerow = 40, tilecolumn = 40;
 
 std::vector<Bullet>g_bullets;
 
@@ -97,6 +103,14 @@ void timerFunc(int value) {
 	setupCamera();
 	glutPostRedisplay();
 	glutTimerFunc(30, timerFunc, 0);
+}
+
+
+void genEnemyFunc(int value) {
+	InitEnemy(); // 적을 만드는 함수는 분리
+
+
+	glutTimerFunc(genEnemyInterval, genEnemyFunc, 0); // 별개의 타이머 콜백으로 분리해서 사용
 }
 
 void keyboard(unsigned char key, int x, int y) {
@@ -211,27 +225,38 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	//glutMotionFunc(Motion);
 	glutPassiveMotionFunc(PassiveMotion);
 	glutTimerFunc(30, timerFunc, 0);
+	glutTimerFunc(genEnemyInterval / 2, genEnemyFunc, 0);
 	glutMainLoop();
 }
 
 void drawEnemy(GLint modelLoc) {
-	mat4 baseModelMat = glm::translate(mat4(1.0f), vec3(0.0f, 0.0f, 2.0f)); // 적이 그려지는 도형 전체에 대한 이동
+	glBindVertexArray(sphereVAO);
 
-	mat4 enemyModelMat = mat4(1.0f); // 적 모델 행렬
-	enemyModelMat *= baseModelMat;
-	enemyModelMat = glm::rotate(enemyModelMat, glm::radians(-90.0f), vec3(1.0f, 0.0f, 0.0f));
+	mat4 baseModelMat = glm::translate(mat4(1.0f), vec3(0.0f, 0.0f, 0.0f)); // 적이 그려지는 도형 전체에 대한 이동
 
-	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(enemyModelMat));
-	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 1.0f, 0.5f, 1.0f);
 
-	gluCylinder(qobj, 0.75f, 0.75f, 1.5f, 20.0f, 8.0f);
+	for (int i = 0; i < g_enemies.size(); i++) {
+		baseModelMat = glm::translate(mat4(1.0f), vec3(g_enemies[i].x, g_enemies[i].y, g_enemies[i].z));
 
-	enemyModelMat = glm::translate(enemyModelMat,  vec3(0.0f, 0.0f, 0.0f));
-	enemyModelMat *= baseModelMat; // 회전한 흔적 제거
+		mat4 enemyModelMat = mat4(1.0f); // 적 모델 행렬
+		glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 1.0f, 0.5f, 1.0f);
 
-	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(enemyModelMat));
+		enemyModelMat *= baseModelMat;
+		enemyModelMat = glm::translate(enemyModelMat, vec3(0.0f, 2.0f, 0.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(enemyModelMat));
+		glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
 
-	gluSphere(qobj, 0.8, 50, 50);
+
+		enemyModelMat = baseModelMat;
+		enemyModelMat = glm::rotate(enemyModelMat, glm::radians(-90.0f), vec3(1.0f, 0.0f, 0.0f));
+		enemyModelMat = glm::translate(enemyModelMat, vec3(0.0f, 0.0f, 0.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(enemyModelMat));
+		gluCylinder(qobj, 0.75f, 0.75f, 1.5f, 20.0f, 8.0f);
+
+		enemyModelMat = glm::translate(enemyModelMat, vec3(0.0f, 0.0f, 0.0f));
+		enemyModelMat *= baseModelMat; // 회전한 흔적 제거
+	}
+
 
 	glBindVertexArray(enemyVAO);
 	glBindVertexArray(0); // VAO 언바인딩
@@ -241,14 +266,17 @@ void drawBuliding(GLint modelLoc) {
 	mat4 buildingModelMat = mat4(1.0f);
 	glBindVertexArray(buildVAO);
 	for (int i = 0; i < g_buildings.size(); i++) {
-		buildingModelMat = mat4(1.0f);
-		buildingModelMat *= translate(buildingModelMat, vec3(g_buildings[i].x, g_buildings[i].y, g_buildings[i].z));
-		buildingModelMat *= scale(buildingModelMat, vec3(g_buildings[i].scale.x, g_buildings[i].scale.y, g_buildings[i].scale.z));
+		if (g_buildings[i].x >= -50.0f && g_buildings[i].x <= 50.0f &&
+			g_buildings[i].z >= -50.0f && g_buildings[i].z <= 50.0f) {
+			buildingModelMat = mat4(1.0f);
+			buildingModelMat *= translate(buildingModelMat, vec3(g_buildings[i].x, g_buildings[i].y, g_buildings[i].z));
+			buildingModelMat *= scale(buildingModelMat, vec3(g_buildings[i].scale.x, g_buildings[i].scale.y, g_buildings[i].scale.z));
 
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(buildingModelMat));
-		glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 1.0f);
+			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(buildingModelMat));
+			glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 1.0f);
 
-		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+			glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+		}
 	}
 
 	glBindVertexArray(0);
@@ -321,31 +349,77 @@ GLfloat GetRandomNumber(int seed) {
 	return result;
 }
 
+void InitEnemy() {
+	Enemy newenemy; // 새로 만들 적 선언
+	int enemyseed = 100; // seed 값을 지정
+
+
+	newenemy.x = GetRandomNumber(enemyseed);
+	newenemy.y = 0.0f;
+	newenemy.z = GetRandomNumber(enemyseed); // seed에 따라 좌표를 배정
+	newenemy.angleX = 0, newenemy.angleY = 0, newenemy.angleZ = 0;	// 생성 당시에는 player를 바라보지는 않는다.
+
+	newenemy.x += player.x;
+	newenemy.z += player.z;
+
+	newenemy.speed = 0.01f;
+
+	g_enemies.push_back(newenemy); // 리스트에 추가
+}
+
+void MoveEnemy() {
+	float dx = 0, dz = 0;
+	for (int i = 0; i < g_enemies.size(); i++) {
+		dx = player.x - g_enemies[i].x;
+		dz = player.z - g_enemies[i].z;
+
+		g_enemies[i].x = g_enemies[i].x + dx * g_enemies[i].speed;
+		g_enemies[i].z = g_enemies[i].z + dz * g_enemies[i].speed;
+	}
+}
+
+void DeleteEnemy(int index) {
+	g_enemies.erase(g_enemies.begin() + index);
+}
+
+void SetTile() {
+	int i = -1;
+	int j = -1;
+
+	while (true) {
+		i = (int)((float)rand() / RAND_MAX * (tilerow - 1));
+		j = (int)((float)rand() / RAND_MAX * (tilecolumn - 1));
+
+		if (maptile[i][j] <= 0) {
+			maptile[i][j] = 1;
+
+			break;
+		}
+	} 
+
+}
+
+
 void InitBuliding(const char* objFilename) {
+	maptile = InitTileArr(maptile, tilerow, tilecolumn);
+
+	for (int i = 0; i < numBuild; i++) {
+		SetTile();
+	}
+
+
 	Building building;
 
 	read_obj_file(objFilename, &buildingModel);
 
-	building = { 23.0f, 0.0f, -22.0f, 4.0f, 4.0f, 4.0f};
-	g_buildings.push_back(building);
-	building = { -10.0f, 0.0f, -12.0f, 8.0f, 4.0f, 4.0f};
-	g_buildings.push_back(building);
-	building = { 13.0f, 0.0f, 20.0f, 4.0f, 8.0f, 8.0f };
-	g_buildings.push_back(building);
-	building = { -9.0f, 0.0f, 8.0f, 4.0f, 4.0f, 8.0f };
-	g_buildings.push_back(building);
-	building = { 16.0f, 0.0f, -23.0f, 6.0f, 4.0f, 4.0f };
-	g_buildings.push_back(building);
-	building = { 13.0f, 0.0f, -16.0f, 4.0f, 4.0f, 4.0f };
-	g_buildings.push_back(building);
-	building = { -4.0f, 0.0f, 2.0f, 8.0f, 8.0f, 8.0f };
-	g_buildings.push_back(building);
-	building = { -5.0f, 0.0f, -10.0f, 4.0f, 4.0f, 4.0f };
-	g_buildings.push_back(building);
-	building = { -10.0f, 0.0f, 20.0f, 4.0f, 4.0f, 6.0f };
-	g_buildings.push_back(building);
-	building = { -22.0f, 0.0f, -14.0f, 6.0f, 8.0f, 2.0f };
-	g_buildings.push_back(building);
+	for (int i = 0; i < tilerow; i++) {
+		for (int j = 0; j < tilecolumn; j++) {
+			if (maptile[i][j] > 0) {
+				building = { (float)i * 5 - 100.0f, 0.0f, (float)j * 5 - 100.0f, 5.0f, 10.0f, 5.0f };
+				g_buildings.push_back(building);
+			}
+		}
+	}
 
 
 
