@@ -14,36 +14,25 @@
 #include "shader.h"
 #include "sphere.h"
 #include "Hexahedron.h"
+#include "player.h"
+#include "bullet.h"
+#include "floor.h"
 
 using namespace glm;
 using namespace std;
 
-//--- 아래 5개 함수는 사용자 정의 함수
+//--- 사용자 정의 함수
 GLvoid drawScene();
 GLvoid Reshape(int w, int h);
-void InitFloor();
-void InitPlayer();
 void InitBuliding(const char* objFilename);
-void shootBullet();
-void drawBullets(GLint modelLoc);
-void updateBullets();
 //--- 셰이더 변수 선언
 GLint width, height;
-GLuint floorVAO, floorVBO, floorEBO;
-GLuint playerVAO, playerVBO, playerEBO;
 GLuint enemyVAO, enemyVBO, enemyEBO;
 GLuint buildVAO, buildVBO, buildEBO;
 mat4 view;
 mat4 projection;
 //--- 전역 변수 선언
-GLUquadricObj* qobj;
-
-typedef struct Player {
-	GLfloat x, y, z;
-	GLfloat dx, dy, dz;
-	GLfloat angleXZ;
-	GLfloat angleY;
-};
+GLUquadricObj* qobj = nullptr;
 Player player;
 
 typedef struct Enemy {
@@ -60,11 +49,6 @@ std::vector<Building>g_buildings;
 Model buildingModel;
 int numBuild = 10;
 
-typedef struct Bullet {
-	GLfloat x, y, z;
-	GLfloat dx, dy, dz;
-	GLfloat speed;
-};
 std::vector<Bullet>g_bullets;
 
 float prevMouseX, prevMouseY;
@@ -98,16 +82,7 @@ void setupCamera() {
 
 // 타이머 함수
 void timerFunc(int value) {
-	// 플레이어 카메라 업데이트
-	vec3 direction = normalize(vec3(
-		cos(glm::radians(player.angleXZ)),  // X축 성분
-		0.0f,                              // Y축 (고정)
-		sin(glm::radians(player.angleXZ))  // Z축 성분
-	));
-	player.x += player.dx * direction.x - player.dz * direction.z;
-	player.z += player.dx * direction.z + player.dz * direction.x;
-	//player.y += player.dy;
-
+	updatePlayer(player);
 	// 조명 위치 업데이트
 	lightAngle += 0.1f; // 회전 속도 (deg/frame)
 	if (lightAngle >= 360.0f) lightAngle -= 360.0f;
@@ -118,7 +93,7 @@ void timerFunc(int value) {
 
 	skyColor = 1.0 - (1.0f * (sin(glm::radians(lightAngle / 2))));
 
-	updateBullets();
+	updateBullets(g_bullets);
 	setupCamera();
 	glutPostRedisplay();
 	glutTimerFunc(30, timerFunc, 0);
@@ -137,6 +112,11 @@ void keyboard(unsigned char key, int x, int y) {
 		break;
 	case 'd':
 		if (player.dz < 0.3f) player.dz += 0.3f;
+		break;
+	case ' ':
+		if (player.dy == 0.0f) {
+			jump(player);
+		}
 		break;
 	case 'q':
 		exit(0);
@@ -166,7 +146,7 @@ void keyboardUp(unsigned char key, int x, int y) {
 void Mouse(int button, int state, int x, int y) {
 	if (button == GLUT_LEFT_BUTTON) {
 		if (state == GLUT_DOWN) {
-			shootBullet();
+			shootBullet(player, g_bullets);
 		}
 		else if (state == GLUT_UP) {
 
@@ -215,7 +195,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 
 	//--- 세이더 읽어와서 세이더 프로그램 만들기
 	make_shaderProgram();
-	InitPlayer();
+	InitPlayer(qobj, player);
 	InitFloor();
 	initSphereBuffer(0.8f, 20, 20);
 	InitBuliding("obj.obj");
@@ -232,34 +212,6 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glutPassiveMotionFunc(PassiveMotion);
 	glutTimerFunc(30, timerFunc, 0);
 	glutMainLoop();
-}
-
-void drawFloor(GLint modelLoc) {
-	// 바닥
-	glBindVertexArray(floorVAO);
-	mat4 floorModel = mat4(1.0f); // 모델 행렬
-	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(floorModel));
-
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-	glBindVertexArray(0);	
-}
-
-void drawPlayer(GLint modelLoc) {
-	glBindVertexArray(sphereVAO);
-
-	mat4 playerModelMat = mat4(1.0f); // 플레이어 모델 행렬
-	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 1.0f,0.0f,0.0f);
-
-	playerModelMat = glm::translate(playerModelMat, vec3(player.x, player.y + 2.0f, player.z));
-	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(playerModelMat));
-	glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
-
-	playerModelMat = glm::rotate(playerModelMat, glm::radians(-90.0f), vec3(1.0f, 0.0f, 0.0f));
-	playerModelMat = glm::translate(playerModelMat, vec3(0.0f, 0.0f, -2.0f));
-	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(playerModelMat));
-	gluCylinder(qobj, 1.0, 0.3, 1.5, 20, 8);
-
-	glBindVertexArray(0); // VAO 언바인딩
 }
 
 void drawEnemy(GLint modelLoc) {
@@ -327,25 +279,25 @@ GLvoid drawScene() {
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, value_ptr(projection));
 
 	drawFloor(modelLoc);
-	drawPlayer(modelLoc);
+	drawPlayer(modelLoc, qobj, player);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 	drawEnemy(modelLoc);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 	drawBuliding(modelLoc);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
-	drawBullets(modelLoc);
+	drawBullets(modelLoc, player, g_bullets);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 
 	// 미니맵
 	glViewport(WINDOW_X * 3 / 4, WINDOW_Y * 3 / 4, WINDOW_X / 4, WINDOW_Y / 4); // 오른쪽 위
 	vec3 bodyModelPosV2 = vec3(player.x, 0.0f, player.z); // bodyModel의 대략적인 위치
-	vec3 cameraPosV2 = vec3(player.x, 10.0f, player.z);
+	vec3 cameraPosV2 = vec3(player.x, 35.0f, player.z);
 	mat4 bodyViewV2 = lookAt(cameraPosV2, bodyModelPosV2, vec3(1.0f, 0.0f, 0.0f)); // bodyModel을 바라보는 뷰 행렬
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(bodyViewV2));
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, value_ptr(projection));
 
 	drawFloor(modelLoc);
-	drawPlayer(modelLoc);
+	drawPlayer(modelLoc, qobj, player);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 	drawEnemy(modelLoc);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
@@ -360,71 +312,6 @@ GLvoid drawScene() {
 //--- 다시그리기 콜백 함수
 GLvoid Reshape(int w, int h) {
 	glViewport(0, 0, w, h);
-}
-
-void InitFloor() {
-	// 바닥 정점 데이터
-	GLfloat floorVertices[] = {
-		// Positions          // Colors
-		-50.0f, 0.0f, -50.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-		 50.0f, 0.0f, -50.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-		 50.0f, 0.0f,  50.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-		-50.0f, 0.0f,  50.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-	};
-
-	// 바닥의 인덱스 데이터
-	GLuint floorIndices[] = {
-		0, 1, 2, // 첫 번째 삼각형
-		0, 3, 2  // 두 번째 삼각형
-	};
-
-	// VAO 생성 및 바인딩
-	glGenVertexArrays(1, &floorVAO);
-	glBindVertexArray(floorVAO);
-
-	// VBO 생성 및 데이터 전송
-	glGenBuffers(1, &floorVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, floorVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(floorVertices), floorVertices, GL_STATIC_DRAW);
-
-	// EBO (Element Buffer Object) 생성 및 데이터 전송
-	GLuint ebo;
-	glGenBuffers(1, &ebo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(floorIndices),floorIndices, GL_STATIC_DRAW);
-
-	// 위치 속성 (attribute 0)
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), (GLvoid*)0);
-	glEnableVertexAttribArray(0);
-
-	// 색상 속성 (attribute 1)
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
-	glEnableVertexAttribArray(1);
-
-	// 법선 속성 (attribute 2)
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), (GLvoid*)(6 * sizeof(GLfloat)));
-	glEnableVertexAttribArray(2);
-
-	// VAO 언바인딩
-	glBindVertexArray(0);
-}
-
-void InitPlayer() {
-	// 플레이어 모델용 Quadric 생성
-	qobj = gluNewQuadric();
-	gluQuadricDrawStyle(qobj, GLU_FILL);
-	gluQuadricNormals(qobj, GLU_SMOOTH);
-	gluQuadricOrientation(qobj, GLU_OUTSIDE);
-	
-	glBindVertexArray(0); // VAO 언바인딩
-	player.x = 0.0f;
-	player.y = 0.0f;
-	player.z = 0.0f;
-	player.dx = 0.0f;
-	player.dy = 0.0f;
-	player.dz = 0.0f;
-	player.angleXZ = 0.0f;
-	player.angleY = 0.0f;
 }
 
 GLfloat GetRandomNumber(int seed) {
@@ -485,56 +372,5 @@ void InitBuliding(const char* objFilename) {
 	glEnableVertexAttribArray(0);
 
 	// VAO 언바인딩
-	glBindVertexArray(0);
-}
-
-void shootBullet() {
-	Bullet newBullet;
-	vec3 direction = normalize(vec3(
-		cos(glm::radians(player.angleXZ)), // X축 방향
-		0.0f,                              // Y축 (수평)
-		sin(glm::radians(player.angleXZ))  // Z축 방향
-	));
-
-	newBullet = { player.x, player.y + 1.95f, player.z };
-
-	newBullet.dx = direction.x;
-	newBullet.dy = direction.y;
-	newBullet.dz = direction.z;
-
-	newBullet.speed = 0.8f;
-
-	g_bullets.push_back(newBullet);
-}
-
-void updateBullets() {
-	for (int i = 0; i < g_bullets.size(); i++) {
-		g_bullets[i].x += g_bullets[i].dx * g_bullets[i].speed;
-		g_bullets[i].y += g_bullets[i].dy * g_bullets[i].speed;
-		g_bullets[i].z += g_bullets[i].dz * g_bullets[i].speed;
-
-		if (g_bullets[i].x > 100.0f || g_bullets[i].x < -100.0f ||
-			g_bullets[i].z > 100.0f || g_bullets[i].z < -100.0f) {
-			g_bullets.erase(g_bullets.begin() + i);
-			i--;
-		}
-	}
-}
-
-void drawBullets(GLint modelLoc) {
-	float radius = 0.1f;
-	glBindVertexArray(sphereVAO);
-
-	mat4 bulletModel;
-	for (const Bullet& bullet : g_bullets) {
-		bulletModel = mat4(1.0f);
-		bulletModel = translate(bulletModel, vec3(bullet.x + radius * glm::cos(radians(player.angleXZ + 90.0f)), bullet.y, bullet.z + radius * glm::sin(radians(player.angleXZ + 90.0f))));
-		bulletModel = scale(bulletModel, vec3(0.01f, 0.01f, 0.01f)); // 총알 크기 조정
-
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(bulletModel));
-		glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 1.0f, 1.0f, 0.0f); // 노란색 총알
-
-		glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
-	}
 	glBindVertexArray(0);
 }
