@@ -18,6 +18,8 @@
 #include "player.h"
 #include "bullet.h"
 #include "floor.h"
+#include "Enemy.h"
+#include "Building.h"
 
 using namespace glm;
 using namespace std;
@@ -26,11 +28,9 @@ using namespace std;
 GLvoid drawScene();
 GLvoid Reshape(int w, int h);
 void InitBuliding(const char* objFilename);
-void InitEnemy();
-void MoveEnemy();
 //--- 셰이더 변수 선언
 GLint width, height;
-GLuint enemyVAO, enemyVBO, enemyEBO;
+
 GLuint buildVAO, buildVBO, buildEBO;
 mat4 view;
 mat4 projection;
@@ -38,12 +38,6 @@ mat4 projection;
 GLUquadricObj* qobj = nullptr;
 Player player;
 
-typedef struct Enemy {
-	GLfloat x, y, z;
-	GLfloat dx, dy, dz;
-	GLfloat angleX, angleY, angleZ;
-	GLfloat speed;
-};
 std::vector<Enemy>g_enemies;
 int genEnemyInterval = 5000;
 
@@ -102,7 +96,7 @@ void timerFunc(int value) {
 	skyColor = 1.0 - (1.0f * (sin(glm::radians(lightAngle / 2))));
 
 	updateBullets(g_bullets);
-	MoveEnemy();
+	MoveEnemy(player.x, player.z, g_enemies);
 	setupCamera();
 	glutPostRedisplay();
 	glutTimerFunc(30, timerFunc, 0);
@@ -110,7 +104,7 @@ void timerFunc(int value) {
 
 
 void genEnemyFunc(int value) {
-	InitEnemy(); // 적을 만드는 함수는 분리
+	InitEnemy(player.x, player.z, g_enemies); // 적을 만드는 함수는 분리
 
 
 	glutTimerFunc(genEnemyInterval, genEnemyFunc, 0); // 별개의 타이머 콜백으로 분리해서 사용
@@ -232,38 +226,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glutMainLoop();
 }
 
-void drawEnemy(GLint modelLoc) {
-	glBindVertexArray(sphereVAO);
 
-	mat4 baseModelMat = glm::translate(mat4(1.0f), vec3(0.0f, 0.0f, 0.0f)); // 적이 그려지는 도형 전체에 대한 이동
-
-
-	for (int i = 0; i < g_enemies.size(); i++) {
-		baseModelMat = glm::translate(mat4(1.0f), vec3(g_enemies[i].x, g_enemies[i].y, g_enemies[i].z));
-
-		mat4 enemyModelMat = mat4(1.0f); // 적 모델 행렬
-		glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 1.0f, 0.5f, 1.0f);
-
-		enemyModelMat *= baseModelMat;
-		enemyModelMat = glm::translate(enemyModelMat, vec3(0.0f, 2.0f, 0.0f));
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(enemyModelMat));
-		glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
-
-
-		enemyModelMat = baseModelMat;
-		enemyModelMat = glm::rotate(enemyModelMat, glm::radians(-90.0f), vec3(1.0f, 0.0f, 0.0f));
-		enemyModelMat = glm::translate(enemyModelMat, vec3(0.0f, 0.0f, 0.0f));
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(enemyModelMat));
-		gluCylinder(qobj, 0.75f, 0.75f, 1.5f, 20.0f, 8.0f);
-
-		enemyModelMat = glm::translate(enemyModelMat, vec3(0.0f, 0.0f, 0.0f));
-		enemyModelMat *= baseModelMat; // 회전한 흔적 제거
-	}
-
-
-	glBindVertexArray(enemyVAO);
-	glBindVertexArray(0); // VAO 언바인딩
-}
 
 void ConcatenateTile(int index) {
 	float clipx = abs(player.x) - 50.0f;
@@ -340,7 +303,7 @@ GLvoid drawScene() {
 	drawFloor(modelLoc, player);
 	drawPlayer(modelLoc, qobj, player);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
-	drawEnemy(modelLoc);
+	drawEnemy(modelLoc, qobj, g_enemies);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 	drawBuliding(modelLoc);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
@@ -358,7 +321,7 @@ GLvoid drawScene() {
 	drawFloor(modelLoc, player);
 	drawPlayer(modelLoc, qobj, player);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
-	drawEnemy(modelLoc);
+	drawEnemy(modelLoc, qobj, g_enemies);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 	drawBuliding(modelLoc);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
@@ -373,41 +336,9 @@ GLvoid Reshape(int w, int h) {
 	glViewport(0, 0, w, h);
 }
 
-GLfloat GetRandomNumber(int seed) {
-	// 결과값의 범위는 [-seed/2, seed/2]
-	float result = (float)((float)rand() / RAND_MAX) * seed - ((float)seed / 2.0f);
-
-	return result;
-}
-
-void InitEnemy() {
-	Enemy newenemy; // 새로 만들 적 선언
-	int enemyseed = 100; // seed 값을 지정
 
 
-	newenemy.x = GetRandomNumber(enemyseed);
-	newenemy.y = 0.0f;
-	newenemy.z = GetRandomNumber(enemyseed); // seed에 따라 좌표를 배정
-	newenemy.angleX = 0, newenemy.angleY = 0, newenemy.angleZ = 0;	// 생성 당시에는 player를 바라보지는 않는다.
 
-	newenemy.x += player.x;
-	newenemy.z += player.z;
-
-	newenemy.speed = 0.01f;
-
-	g_enemies.push_back(newenemy); // 리스트에 추가
-}
-
-void MoveEnemy() {
-	float dx = 0, dz = 0;
-	for (int i = 0; i < g_enemies.size(); i++) {
-		dx = player.x - g_enemies[i].x;
-		dz = player.z - g_enemies[i].z;
-
-		g_enemies[i].x = g_enemies[i].x + dx * g_enemies[i].speed;
-		g_enemies[i].z = g_enemies[i].z + dz * g_enemies[i].speed;
-	}
-}
 
 void DeleteEnemy(int index) {
 	g_enemies.erase(g_enemies.begin() + index);
