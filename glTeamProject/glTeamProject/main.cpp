@@ -305,6 +305,7 @@ GLvoid drawScene() {
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 
 	// 미니맵
+	glDisable(GL_DEPTH_TEST);
 	glViewport(WINDOW_X * 3 / 4, WINDOW_Y * 3 / 4, WINDOW_X / 4, WINDOW_Y / 4); // 오른쪽 위
 	vec3 bodyModelPosV2 = vec3(player.x, 0.0f, player.z); // bodyModel의 대략적인 위치
 	vec3 cameraPosV2 = vec3(player.x, 35.0f, player.z);
@@ -319,7 +320,7 @@ GLvoid drawScene() {
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 	drawBuliding(modelLoc);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
-
+	glEnable(GL_DEPTH_TEST);
 
 	//--- 버퍼 스왑
 	glutSwapBuffers();
