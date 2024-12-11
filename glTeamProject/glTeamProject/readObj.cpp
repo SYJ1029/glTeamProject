@@ -64,6 +64,7 @@ void read_obj_file(const char* filename, Model* model) {
 			face_index++;
 		}
 		else if (line[0] == 'v' && line[1] == 'n' && line[2] == ' ') {
+			// normal 데이터 읽기
 			sscanf_s(line + 3, "%f %f %f",
 				&model->normals[normal_index].x,
 				&model->normals[normal_index].y,

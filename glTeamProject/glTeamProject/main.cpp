@@ -27,11 +27,10 @@ using namespace std;
 //--- 사용자 정의 함수
 GLvoid drawScene();
 GLvoid Reshape(int w, int h);
-void InitBuliding(const char* objFilename);
 //--- 셰이더 변수 선언
 GLint width, height;
 
-GLuint buildVAO, buildVBO, buildEBO;
+
 mat4 view;
 mat4 projection;
 //--- 전역 변수 선언
@@ -41,10 +40,7 @@ Player player;
 std::vector<Enemy>g_enemies;
 int genEnemyInterval = 5000;
 
-typedef struct Building {
-	GLfloat x, y, z;
-	Vertex scale;
-};
+
 std::vector<Building>g_buildings;
 Model buildingModel;
 int numBuild = 30;
@@ -205,7 +201,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	InitPlayer(qobj, player);
 	InitFloor();
 	initSphereBuffer(0.8f, 20, 20);
-	InitBuliding("obj.obj");
+	InitBuliding("obj.obj", maptile, tilerow, tilecolumn, numBuild, &buildingModel, g_buildings);
 	setupCamera();
 	glEnable(GL_DEPTH_TEST);
 
@@ -222,53 +218,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glutMainLoop();
 }
 
-void ConcatenateTile(int index) {
-	float clipx = abs(player.x) - 50.0f;
-	float clipz = abs(player.z) - 50.0f;
-	
-	if (clipx > 0 && abs(g_buildings[index].x) < 100.0f - clipx) { // floor가 클리핑한 범위가 Tile의 범위를 벗어남
-		if (player.x < 0)  {
-			// player.x < 0 은 좌측으로 잘렸음을 의미
-			
-			g_buildings[index].x -= 100.0f; // 끝으로 이동한다.
 
-		}
-		else { // player.x = 0인 경우는 고려할 필요가 없음.
-			g_buildings[index].x += 100.0f; // 반대 끝으로 이동한다.
-		}
-	}
-
-	if (clipz > 0 && abs(g_buildings[index].z) < 100.0f - clipz) { // 벗어남 2
-		if (player.z < 0) {
-			// player.z< 0 은 위쪽으로 잘렸음을 의미
-
-			g_buildings[index].z -= 100.0f;
-		}
-		else{
-			g_buildings[index].z += 100.0f;
-	}
-	}
-}
-
-void drawBuliding(GLint modelLoc) {
-	glBindVertexArray(buildVAO);
-	for (int i = 0; i < g_buildings.size(); i++) {
-		ConcatenateTile(i);
-		if (g_buildings[i].x >= -50.0f + player.x && g_buildings[i].x <= 50.0f + player.x &&
-			g_buildings[i].z >= -50.0f + player.z && g_buildings[i].z <= 50.0f + player.z) {
-			mat4 buildingModelMat = mat4(1.0f);
-			buildingModelMat = translate(buildingModelMat, vec3(g_buildings[i].x, g_buildings[i].y, g_buildings[i].z));
-			buildingModelMat = scale(buildingModelMat, vec3(g_buildings[i].scale.x, g_buildings[i].scale.y, g_buildings[i].scale.z));
-
-			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(buildingModelMat));
-			glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 1.0f);
-
-			glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-		}
-	}
-
-	glBindVertexArray(0);
-}
 
 //--- 출력 콜백 함수
 GLvoid drawScene() {
@@ -299,7 +249,7 @@ GLvoid drawScene() {
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 	drawEnemy(modelLoc, qobj, g_enemies);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
-	drawBuliding(modelLoc);
+	drawBuliding(modelLoc, g_buildings, player.x, player.z);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 	drawBullets(modelLoc, player, g_bullets);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
@@ -318,7 +268,7 @@ GLvoid drawScene() {
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 	drawEnemy(modelLoc, qobj, g_enemies);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
-	drawBuliding(modelLoc);
+	drawBuliding(modelLoc, g_buildings, player.x, player.z);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 	glEnable(GL_DEPTH_TEST);
 
@@ -335,68 +285,6 @@ void DeleteEnemy(int index) {
 	g_enemies.erase(g_enemies.begin() + index);
 }
 
-void SetTile() {
-	int i = -1;
-	int j = -1;
-
-	while (true) {
-		i = (int)((float)rand() / RAND_MAX * (tilerow - 1));
-		j = (int)((float)rand() / RAND_MAX * (tilecolumn - 1));
-
-		if (maptile[i][j] <= 0) {
-			maptile[i][j] = 1;
-
-			break;
-		}
-	} 
-
-}
-
-void InitBuliding(const char* objFilename) {
-	maptile = InitTileArr(maptile, tilerow, tilecolumn);
-
-	for (int i = 0; i < numBuild; i++) {
-		SetTile();
-	}
-
-
-	Building building;
-
-	read_obj_file(objFilename, &buildingModel);
-
-	for (int i = 0; i < tilerow; i++) {
-		for (int j = 0; j < tilecolumn; j++) {
-			if (maptile[i][j] > 0) {
-				building = { (float)i * 5 - 100.0f, 0.0f, (float)j * 5 - 100.0f, 5.0f, 10.0f, 5.0f };
-				g_buildings.push_back(building);
-			}
-		}
-	}
 
 
 
-
-	glGenVertexArrays(1, &buildVAO);
-	glGenBuffers(1, &buildVBO);
-	glGenBuffers(1, &buildEBO);
-
-	glBindVertexArray(buildVAO);
-
-	//VBO에 데이터 등록
-	glBindBuffer(GL_ARRAY_BUFFER, buildVBO);
-	glBufferData(GL_ARRAY_BUFFER, 40 * sizeof(buildingModel.vertices), buildingModel.vertices, GL_STATIC_DRAW);
-	cout << sizeof(buildingModel.vertices) << endl;
-
-	//EBO에 데이터 등록
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buildEBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 40 * sizeof(buildingModel.faces), buildingModel.faces, GL_STATIC_DRAW);
-	cout << sizeof(buildingModel.faces) << endl;
-
-
-	// 위치 속성 지정 (attribute 0)
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)0);
-	glEnableVertexAttribArray(0);
-
-	// VAO 언바인딩
-	glBindVertexArray(0);
-}
