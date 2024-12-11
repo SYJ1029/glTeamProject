@@ -55,7 +55,7 @@ std::vector<Building>g_buildings;
 Model buildingModel;
 int numBuild = 30;
 int** maptile;
-int tilerow = 40, tilecolumn = 40;
+int tilerow = 50, tilecolumn = 50;
 
 std::vector<Bullet>g_bullets;
 
@@ -265,9 +265,38 @@ void drawEnemy(GLint modelLoc) {
 	glBindVertexArray(0); // VAO 언바인딩
 }
 
+void ConcatenateTile(int index) {
+	float clipx = abs(player.x) - 50.0f;
+	float clipz = abs(player.z) - 50.0f;
+	
+	if (clipx > 0 && abs(g_buildings[index].x) < 100.0f - clipx) { // floor가 클리핑한 범위가 Tile의 범위를 벗어남
+		if (player.x < 0)  {
+			// player.x < 0 은 좌측으로 잘렸음을 의미
+			
+			g_buildings[index].x -= 100.0f; // 끝으로 이동한다.
+
+		}
+		else { // player.x = 0인 경우는 고려할 필요가 없음.
+			g_buildings[index].x += 100.0f; // 반대 끝으로 이동한다.
+		}
+	}
+
+	if (clipz > 0 && abs(g_buildings[index].z) < 100.0f - clipz) { // 벗어남 2
+		if (player.z < 0) {
+			// player.z< 0 은 위쪽으로 잘렸음을 의미
+
+			g_buildings[index].z -= 100.0f;
+		}
+		else{
+			g_buildings[index].z += 100.0f;
+	}
+	}
+}
+
 void drawBuliding(GLint modelLoc) {
 	glBindVertexArray(buildVAO);
 	for (int i = 0; i < g_buildings.size(); i++) {
+		ConcatenateTile(i);
 		if (g_buildings[i].x >= -50.0f + player.x && g_buildings[i].x <= 50.0f + player.x &&
 			g_buildings[i].z >= -50.0f + player.z && g_buildings[i].z <= 50.0f + player.z) {
 			mat4 buildingModelMat = mat4(1.0f);
