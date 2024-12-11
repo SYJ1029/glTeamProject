@@ -49,10 +49,11 @@ void InitFloor() {
 	glBindVertexArray(0);
 }
 
-void drawFloor(GLint modelLoc) {
+void drawFloor(GLint modelLoc, Player &player) {
 	// ¹Ù´Ú
 	glBindVertexArray(floorVAO);
 	mat4 floorModel = mat4(1.0f); // ¸ðµ¨ Çà·Ä
+	floorModel = translate(floorModel, (vec3(player.x, 0.0f, player.z)));
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(floorModel));
 
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);

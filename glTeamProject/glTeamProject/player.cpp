@@ -56,7 +56,6 @@ void updatePlayer(Player &player) {
 	player.z += player.dx * direction.z + player.dz * direction.x;
 
 	applyGravity(player);
-		printf("%f, %f", player.y, player.dy);
 	if (player.y > 0.0f || player.dy > 0.0f) {
 		player.y += player.dy;
 

@@ -266,14 +266,13 @@ void drawEnemy(GLint modelLoc) {
 }
 
 void drawBuliding(GLint modelLoc) {
-	mat4 buildingModelMat = mat4(1.0f);
 	glBindVertexArray(buildVAO);
 	for (int i = 0; i < g_buildings.size(); i++) {
-		if (g_buildings[i].x >= -50.0f && g_buildings[i].x <= 50.0f &&
-			g_buildings[i].z >= -50.0f && g_buildings[i].z <= 50.0f) {
-			buildingModelMat = mat4(1.0f);
-			buildingModelMat *= translate(buildingModelMat, vec3(g_buildings[i].x, g_buildings[i].y, g_buildings[i].z));
-			buildingModelMat *= scale(buildingModelMat, vec3(g_buildings[i].scale.x, g_buildings[i].scale.y, g_buildings[i].scale.z));
+		if (g_buildings[i].x >= -50.0f + player.x && g_buildings[i].x <= 50.0f + player.x &&
+			g_buildings[i].z >= -50.0f + player.z && g_buildings[i].z <= 50.0f + player.z) {
+			mat4 buildingModelMat = mat4(1.0f);
+			buildingModelMat = translate(buildingModelMat, vec3(g_buildings[i].x, g_buildings[i].y, g_buildings[i].z));
+			buildingModelMat = scale(buildingModelMat, vec3(g_buildings[i].scale.x, g_buildings[i].scale.y, g_buildings[i].scale.z));
 
 			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(buildingModelMat));
 			glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 1.0f);
@@ -309,7 +308,7 @@ GLvoid drawScene() {
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(view));
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, value_ptr(projection));
 
-	drawFloor(modelLoc);
+	drawFloor(modelLoc, player);
 	drawPlayer(modelLoc, qobj, player);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 	drawEnemy(modelLoc);
@@ -327,7 +326,7 @@ GLvoid drawScene() {
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(bodyViewV2));
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, value_ptr(projection));
 
-	drawFloor(modelLoc);
+	drawFloor(modelLoc, player);
 	drawPlayer(modelLoc, qobj, player);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 	drawEnemy(modelLoc);

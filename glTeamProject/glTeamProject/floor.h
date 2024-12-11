@@ -1,5 +1,6 @@
 #pragma once
 
+#include "player.h"
 #include <gl/glew.h>
 #include <gl/glm/glm/glm.hpp>
 #include <gl/glm/glm/ext.hpp>
@@ -10,4 +11,4 @@ extern GLuint floorVAO, floorVBO, floorEBO;
 
 void InitFloor();
 
-void drawFloor(GLint modelLoc);
+void drawFloor(GLint modelLoc, Player &player);
