@@ -96,16 +96,15 @@ void timerFunc(int value) {
 	skyColor = 1.0 - (1.0f * (sin(glm::radians(lightAngle / 2))));
 
 	updateBullets(g_bullets);
+	checkCollisionWithEnemies(g_bullets, g_enemies);
 	MoveEnemy(player.x, player.z, g_enemies);
 	setupCamera();
 	glutPostRedisplay();
 	glutTimerFunc(30, timerFunc, 0);
 }
 
-
 void genEnemyFunc(int value) {
 	InitEnemy(player.x, player.z, g_enemies); // 적을 만드는 함수는 분리
-
 
 	glutTimerFunc(genEnemyInterval, genEnemyFunc, 0); // 별개의 타이머 콜백으로 분리해서 사용
 }
@@ -158,9 +157,6 @@ void Mouse(int button, int state, int x, int y) {
 	if (button == GLUT_LEFT_BUTTON) {
 		if (state == GLUT_DOWN) {
 			shootBullet(player, g_bullets);
-		}
-		else if (state == GLUT_UP) {
-
 		}
 	}
 	glutPostRedisplay();
@@ -225,8 +221,6 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glutTimerFunc(genEnemyInterval / 2, genEnemyFunc, 0);
 	glutMainLoop();
 }
-
-
 
 void ConcatenateTile(int index) {
 	float clipx = abs(player.x) - 50.0f;
@@ -314,7 +308,7 @@ GLvoid drawScene() {
 	glViewport(WINDOW_X * 3 / 4, WINDOW_Y * 3 / 4, WINDOW_X / 4, WINDOW_Y / 4); // 오른쪽 위
 	vec3 bodyModelPosV2 = vec3(player.x, 0.0f, player.z); // bodyModel의 대략적인 위치
 	vec3 cameraPosV2 = vec3(player.x, 35.0f, player.z);
-	mat4 bodyViewV2 = lookAt(cameraPosV2, bodyModelPosV2, vec3(1.0f, 0.0f, 0.0f)); // bodyModel을 바라보는 뷰 행렬
+	mat4 bodyViewV2 = lookAt(cameraPosV2, bodyModelPosV2, vec3(cos(radians(player.angleXZ)), 0.0f, sin(radians(player.angleXZ)))); // bodyModel을 바라보는 뷰 행렬
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(bodyViewV2));
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, value_ptr(projection));
 
@@ -336,10 +330,6 @@ GLvoid Reshape(int w, int h) {
 	glViewport(0, 0, w, h);
 }
 
-
-
-
-
 void DeleteEnemy(int index) {
 	g_enemies.erase(g_enemies.begin() + index);
 }
@@ -360,7 +350,6 @@ void SetTile() {
 	} 
 
 }
-
 
 void InitBuliding(const char* objFilename) {
 	maptile = InitTileArr(maptile, tilerow, tilecolumn);
