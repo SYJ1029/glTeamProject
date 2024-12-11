@@ -21,7 +21,6 @@ typedef struct Building {
 
 extern GLuint buildVAO, buildVBO, buildEBO;
 
-void SetTile(int** maptile, int& tilerow, int& tilecolumn);
 void InitBuliding(const char* objFilename, int** maptile, int& tilerow, int& tilecolumn, 
 	int numBuild, Model* buildingModel, std::vector<Building>& g_buildings);
 void ConcatenateTile(int index, std::vector<Building>& g_buildings, float dx, float dz);
