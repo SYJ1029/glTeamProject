@@ -16,6 +16,7 @@ void InitPlayer(GLUquadricObj* &qobj, Player &player) {
 	player.dz = 0.0f;
 	player.angleXZ = 0.0f;
 	player.angleY = 0.0f;
+	player.gun = 0;
 }
 
 void drawPlayer(GLint modelLoc, GLUquadricObj*& qobj, Player &player) {
@@ -36,16 +37,7 @@ void drawPlayer(GLint modelLoc, GLUquadricObj*& qobj, Player &player) {
 	glBindVertexArray(hexVao);
 	float radius = 1.8f;
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.2f, 0.2f, 0.2f);
-
-	mat4 gumModelBody = playerModelMat;
-	gumModelBody = glm::translate(gumModelBody, vec3(0.0f, 0.0f, 1.8f));
-	gumModelBody = glm::rotate(gumModelBody, glm::radians(90.0f), vec3(1.0f, 0.0f, 0.0f));
-	gumModelBody = translate(gumModelBody, vec3(radius * glm::cos(radians(player.angleXZ + 8.0f)), 0.0f, radius * glm::sin(radians(player.angleXZ + 8.0f))));
-	gumModelBody = glm::rotate(gumModelBody, glm::radians(-player.angleXZ), vec3(0.0f, 1.0f, 0.0f));
-	gumModelBody = scale(gumModelBody, vec3(0.3f, 0.1f, 0.1f));
-	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(gumModelBody));
-	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-
+	//¼ÕÀâÀÌ
 	mat4 gumModelHandle = playerModelMat;
 	gumModelHandle = glm::translate(gumModelHandle, vec3(0.0f, 0.0f, 1.7f));
 	gumModelHandle = glm::rotate(gumModelHandle, glm::radians(90.0f), vec3(1.0f, 0.0f, 0.0f));
@@ -55,7 +47,31 @@ void drawPlayer(GLint modelLoc, GLUquadricObj*& qobj, Player &player) {
 	gumModelHandle = glm::translate(gumModelHandle, vec3(-1.0f, 0.0f, 0.0f));
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(gumModelHandle));
 	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+	//¸ö
+	mat4 gumModelBody = playerModelMat;
+	gumModelBody = glm::translate(gumModelBody, vec3(0.0f, 0.0f, 1.8f));
+	gumModelBody = glm::rotate(gumModelBody, glm::radians(90.0f), vec3(1.0f, 0.0f, 0.0f));
+	gumModelBody = translate(gumModelBody, vec3(radius * glm::cos(radians(player.angleXZ + 8.0f)), 0.0f, radius * glm::sin(radians(player.angleXZ + 8.0f))));
+	gumModelBody = glm::rotate(gumModelBody, glm::radians(-player.angleXZ), vec3(0.0f, 1.0f, 0.0f));
+	gumModelBody = scale(gumModelBody, vec3(0.1f, 0.1f, 0.1f));
+	gumModelBody = glm::translate(gumModelBody, vec3(-1.0f, 0.0f, 0.0f));
+	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(gumModelBody));
+	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+	// ÃÑ±¸
+	if (player.gun == 0) {
+		mat4 gumModelShoot = playerModelMat;
+		gumModelShoot = glm::translate(gumModelShoot, vec3(0.0f, 0.0f, 1.8f));
+		gumModelShoot = glm::rotate(gumModelShoot, glm::radians(90.0f), vec3(1.0f, 0.0f, 0.0f));
+		gumModelShoot = translate(gumModelShoot, vec3(radius * glm::cos(radians(player.angleXZ + 8.0f)), 0.0f, radius * glm::sin(radians(player.angleXZ + 8.0f))));
+		gumModelShoot = glm::rotate(gumModelShoot, glm::radians(-player.angleXZ), vec3(0.0f, 1.0f, 0.0f));
+		gumModelShoot = scale(gumModelShoot, vec3(0.2f, 0.1f, 0.1f));
+		gumModelShoot = glm::translate(gumModelShoot, vec3(0.26f, 0.0f, 0.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(gumModelShoot));
+		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+	}
+	else {
 
+	}
 	glBindVertexArray(0); // VAO ¾ð¹ÙÀÎµù
 }
 
