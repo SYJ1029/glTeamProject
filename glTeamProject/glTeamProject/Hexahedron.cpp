@@ -1,6 +1,6 @@
 #include "Hexahedron.h"
 
-GLuint vao, vbo;
+GLuint hexVao, hexVbo;
 
 void Initbuffer() {
 	GLfloat vertices[] = {
@@ -69,12 +69,12 @@ void Initbuffer() {
 	};
 
 	// VAO 생성 및 바인딩
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
+	glGenVertexArrays(1, &hexVao);
+	glBindVertexArray(hexVao);
 
 	// VBO 생성 및 데이터 전송
-	glGenBuffers(1, &vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glGenBuffers(1, &hexVbo);
+	glBindBuffer(GL_ARRAY_BUFFER, hexVbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
 	// EBO (Element Buffer Object) 생성 및 데이터 전송

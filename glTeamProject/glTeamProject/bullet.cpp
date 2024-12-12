@@ -24,7 +24,7 @@ void drawBullets(GLint modelLoc, Player& player, std::vector<Bullet>& g_bullets)
     mat4 bulletModel;
     for (const Bullet& bullet : g_bullets) {
         bulletModel = mat4(1.0f);
-        bulletModel = translate(bulletModel, vec3(bullet.x + radius * glm::cos(radians(player.angleXZ + 90.0f)), bullet.y, bullet.z + radius * glm::sin(radians(player.angleXZ + 90.0f))));
+        bulletModel = translate(bulletModel, vec3(bullet.x + radius * glm::cos(radians(player.angleXZ + 60.0f)), bullet.y, bullet.z + radius * glm::sin(radians(player.angleXZ + 60.0f))));
         bulletModel = scale(bulletModel, vec3(0.01f, 0.01f, 0.01f)); // 총알 크기 조정
 
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(bulletModel));

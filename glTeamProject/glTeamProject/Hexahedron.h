@@ -2,7 +2,7 @@
 
 #include "gl/glew.h"
 
-extern GLuint vao, vbo;
+extern GLuint hexVao, hexVbo;
 
 void Initbuffer();
 

@@ -206,6 +206,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	InitFloor();
 	initSphereBuffer(0.8f, 20, 20);
 	InitBuliding("obj.obj");
+	Initbuffer();
 	setupCamera();
 	glEnable(GL_DEPTH_TEST);
 
@@ -296,11 +297,8 @@ GLvoid drawScene() {
 
 	drawFloor(modelLoc, player);
 	drawPlayer(modelLoc, qobj, player);
-	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 	drawEnemy(modelLoc, qobj, g_enemies);
-	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 	drawBuliding(modelLoc);
-	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 	drawBullets(modelLoc, player, g_bullets);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 
@@ -308,16 +306,15 @@ GLvoid drawScene() {
 	glDisable(GL_DEPTH_TEST);
 	glViewport(WINDOW_X * 3 / 4, WINDOW_Y * 3 / 4, WINDOW_X / 4, WINDOW_Y / 4); // 오른쪽 위
 	vec3 bodyModelPosV2 = vec3(player.x, 0.0f, player.z); // bodyModel의 대략적인 위치
-	vec3 cameraPosV2 = vec3(player.x, 35.0f, player.z);
-	mat4 bodyViewV2 = lookAt(cameraPosV2, bodyModelPosV2, vec3(cos(radians(player.angleXZ)), 0.0f, sin(radians(player.angleXZ)))); // bodyModel을 바라보는 뷰 행렬
+	vec3 cameraPosV2 = vec3(player.x, 15.0f, player.z);
+	//mat4 bodyViewV2 = lookAt(cameraPosV2, bodyModelPosV2, vec3(cos(radians(player.angleXZ)), 0.0f, sin(radians(player.angleXZ)))); // bodyModel을 바라보는 뷰 행렬
+	mat4 bodyViewV2 = lookAt(cameraPosV2, bodyModelPosV2, vec3(-1.0f, 0.0f, 0.0f));
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(bodyViewV2));
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, value_ptr(projection));
 
 	drawFloor(modelLoc, player);
 	drawPlayer(modelLoc, qobj, player);
-	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 	drawEnemy(modelLoc, qobj, g_enemies);
-	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 	drawBuliding(modelLoc);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 	glEnable(GL_DEPTH_TEST);

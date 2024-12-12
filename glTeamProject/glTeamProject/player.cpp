@@ -33,6 +33,29 @@ void drawPlayer(GLint modelLoc, GLUquadricObj*& qobj, Player &player) {
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(playerModelMat));
 	gluCylinder(qobj, 1.0, 0.3, 1.5, 20, 8);
 
+	glBindVertexArray(hexVao);
+	float radius = 1.8f;
+	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.2f, 0.2f, 0.2f);
+
+	mat4 gumModelBody = playerModelMat;
+	gumModelBody = glm::translate(gumModelBody, vec3(0.0f, 0.0f, 1.8f));
+	gumModelBody = glm::rotate(gumModelBody, glm::radians(90.0f), vec3(1.0f, 0.0f, 0.0f));
+	gumModelBody = translate(gumModelBody, vec3(radius * glm::cos(radians(player.angleXZ + 8.0f)), 0.0f, radius * glm::sin(radians(player.angleXZ + 8.0f))));
+	gumModelBody = glm::rotate(gumModelBody, glm::radians(-player.angleXZ), vec3(0.0f, 1.0f, 0.0f));
+	gumModelBody = scale(gumModelBody, vec3(0.3f, 0.1f, 0.1f));
+	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(gumModelBody));
+	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+	mat4 gumModelHandle = playerModelMat;
+	gumModelHandle = glm::translate(gumModelHandle, vec3(0.0f, 0.0f, 1.7f));
+	gumModelHandle = glm::rotate(gumModelHandle, glm::radians(90.0f), vec3(1.0f, 0.0f, 0.0f));
+	gumModelHandle = translate(gumModelHandle, vec3(radius * glm::cos(radians(player.angleXZ + 8.0f)), 0.0f, radius * glm::sin(radians(player.angleXZ + 8.0f))));
+	gumModelHandle = glm::rotate(gumModelHandle, glm::radians(-player.angleXZ), vec3(0.0f, 1.0f, 0.0f));
+	gumModelHandle = scale(gumModelHandle, vec3(0.1f, 0.1f, 0.1f));
+	gumModelHandle = glm::translate(gumModelHandle, vec3(-1.0f, 0.0f, 0.0f));
+	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(gumModelHandle));
+	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
 	glBindVertexArray(0); // VAO 언바인딩
 }
 
