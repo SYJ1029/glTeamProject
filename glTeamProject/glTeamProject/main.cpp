@@ -20,6 +20,7 @@
 #include "floor.h"
 #include "Enemy.h"
 #include "Building.h"
+#include "pyramid.h"
 
 using namespace glm;
 using namespace std;
@@ -88,7 +89,7 @@ void timerFunc(int value) {
 	// 조명 위치 업데이트
 	lightAngle += 0.1f; // 회전 속도 (deg/frame)
 	if (lightAngle >= 360.0f) lightAngle -= 360.0f;
-	ambientLight = 0.5f - 0.3f * (sin(glm::radians(lightAngle/2)));
+	ambientLight = 0.5f - 0.4f * (sin(glm::radians(lightAngle/2)));
 	// 조명의 위치를 계산
 	lightPos.y = lightRadius * cos(glm::radians(lightAngle));
 	lightPos.z = lightRadius * sin(glm::radians(lightAngle));
@@ -127,6 +128,9 @@ void keyboard(unsigned char key, int x, int y) {
 		if (player.dy == 0.0f) {
 			jump(player);
 		}
+		break;
+	case '\t':
+		player.gun = !player.gun;
 		break;
 	case 'q':
 		exit(0);
@@ -207,6 +211,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	initSphereBuffer(0.8f, 20, 20);
 	InitBuliding("obj.obj");
 	Initbuffer();
+	InitPyramidBuffer();
 	setupCamera();
 	glEnable(GL_DEPTH_TEST);
 
@@ -281,10 +286,15 @@ GLvoid drawScene() {
 	glUseProgram(shaderProgramID);
 
 	//--- 조명
-	glUniform3f(glGetUniformLocation(shaderProgramID, "lightPos"), lightPos.x, lightPos.y, lightPos.z); // 조명 위치 고정
-	glUniform3f(glGetUniformLocation(shaderProgramID, "lightColor"), 1.0f, 1.0f, 1.0f); // 조명 색상
-	glUniform3f(glGetUniformLocation(shaderProgramID, "viewPos"), cameraPos.x, cameraPos.y, cameraPos.z); // 카메라 위치
-	glUniform1f(glGetUniformLocation(shaderProgramID, "ambientLight"), ambientLight); // 주변광
+	glUniform3f(glGetUniformLocation(shaderProgramID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);		// 조명 위치 고정
+	glUniform3f(glGetUniformLocation(shaderProgramID, "lightColor"), 1.0f, 1.0f, 1.0f);						// 조명 색상
+	glUniform3f(glGetUniformLocation(shaderProgramID, "viewPos"), cameraPos.x, cameraPos.y, cameraPos.z);	// 카메라 위치
+	glUniform1f(glGetUniformLocation(shaderProgramID, "ambientLight"), ambientLight);						// 주변광
+
+	//--- 안개
+	glUniform1f(glGetUniformLocation(shaderProgramID, "fogStart"), 40.0f);
+	glUniform1f(glGetUniformLocation(shaderProgramID, "fogEnd"), 50.0f);
+	glUniform3f(glGetUniformLocation(shaderProgramID, "fogColor"), 0.0f, skyColor, skyColor); // 카메라 위치
 
 	// 그리기
 	GLint modelLoc = glGetUniformLocation(shaderProgramID, "model");

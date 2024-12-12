@@ -12,6 +12,10 @@ uniform vec3 viewPos;    // 월드 좌표에서의 카메라 위치
 uniform float ambientLight; // 주변광
 uniform vec3 objectColor;   // 색상값
 
+uniform float fogStart;  // 안개가 시작되는 거리
+uniform float fogEnd;    // 안개가 완전히 짙어지는 거리
+uniform vec3 fogColor;   // 안개 색상
+
 void main() {
     // Ambient lighting
     vec3 ambient = ambientLight * lightColor;
@@ -27,13 +31,19 @@ void main() {
     float specularStrength = 0.8;
     vec3 viewDir = normalize(viewPos - FragPos);
     vec3 reflectDir = reflect(-lightDir, norm);
-    float specularLight = max (dot (viewDir, reflectDir), 0.0);
-    specularLight = pow(specularLight, shininess);
-    vec3 specular = specularStrength * specularLight * lightColor;
+    float specularComponent = max(dot(viewDir, reflectDir), 0.0);
+    specularComponent = pow(specularComponent, shininess);
+    vec3 specular = specularStrength * specularComponent * lightColor;
 
     vec3 finalColor = (objectColor != vec3(0.0, 0.0, 0.0)) ? objectColor : VertexColor;
-
-    // Combine lighting components
     vec3 result = (ambient + diffuse + specular) * finalColor;
-    FragColor = vec4(result, 1.0);
+
+    // Compute fog effect based on distance
+    float dist = length(viewPos - FragPos);
+    float fogFactor = (dist - fogStart) / (fogEnd - fogStart);
+    fogFactor = clamp(fogFactor, 0.0, 1.0);
+
+    // Combine the fog effect with the final color
+    vec3 finalResult = mix(result, fogColor, fogFactor);
+    FragColor = vec4(finalResult, 1.0);
 }

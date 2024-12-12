@@ -3,6 +3,7 @@
 #include "sphere.h"
 #include "shader.h"
 #include "Hexahedron.h"
+#include "pyramid.h"
 
 #include <gl/glew.h>
 #include <gl/glm/glm/glm.hpp>
@@ -18,7 +19,7 @@ typedef struct Player {
 	GLfloat dx, dy, dz;
 	GLfloat angleXZ;
 	GLfloat angleY;
-	int gun;
+	bool gun;
 };
 
 void InitPlayer(GLUquadricObj* &qobj, Player &player);
