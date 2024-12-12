@@ -20,6 +20,8 @@ typedef struct {
 	size_t vertex_count;
 	Face* faces;
 	size_t face_count;
+	Vertex* normals;
+	size_t normal_count;
 } Model;
 
 void read_obj_file(const char* filename, Model* model);

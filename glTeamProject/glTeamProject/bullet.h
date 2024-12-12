@@ -3,6 +3,7 @@
 #include "player.h"
 #include "sphere.h"
 #include "shader.h"
+#include "Enemy.h"
 #include <gl/glew.h>
 #include <gl/glm/glm/glm.hpp>
 #include <gl/glm/glm/ext.hpp>
@@ -20,3 +21,4 @@ typedef struct Bullet {
 void shootBullet(Player& player, std::vector<Bullet>& g_bullets);
 void drawBullets(GLint modelLoc, Player& player, std::vector<Bullet>& g_bullets);
 void updateBullets(std::vector<Bullet>& g_bullets);
+void checkCollisionWithEnemies(std::vector<Bullet>& g_bullets, std::vector<Enemy>& g_enemies);

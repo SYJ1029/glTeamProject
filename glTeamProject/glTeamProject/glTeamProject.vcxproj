@@ -129,10 +129,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Building.cpp" />
     <ClCompile Include="bullet.cpp" />
+    <ClCompile Include="Enemy.cpp" />
     <ClCompile Include="floor.cpp" />
     <ClCompile Include="Hexahedron.cpp" />
     <ClCompile Include="player.cpp" />
+    <ClCompile Include="randoms.cpp" />
     <ClCompile Include="readObj.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="rwTile.cpp" />
@@ -150,10 +153,13 @@
     </Object>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Building.h" />
     <ClInclude Include="bullet.h" />
+    <ClInclude Include="Enemy.h" />
     <ClInclude Include="floor.h" />
     <ClInclude Include="Hexahedron.h" />
     <ClInclude Include="player.h" />
+    <ClInclude Include="randoms.h" />
     <ClInclude Include="readObj.h" />
     <ClInclude Include="rwTile.h" />
     <ClInclude Include="shader.h" />

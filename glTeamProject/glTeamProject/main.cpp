@@ -18,6 +18,8 @@
 #include "player.h"
 #include "bullet.h"
 #include "floor.h"
+#include "Enemy.h"
+#include "Building.h"
 
 using namespace glm;
 using namespace std;
@@ -25,37 +27,25 @@ using namespace std;
 //--- 사용자 정의 함수
 GLvoid drawScene();
 GLvoid Reshape(int w, int h);
-void InitBuliding(const char* objFilename);
-void InitEnemy();
-void MoveEnemy();
 //--- 셰이더 변수 선언
 GLint width, height;
-GLuint enemyVAO, enemyVBO, enemyEBO;
-GLuint buildVAO, buildVBO, buildEBO;
+
+
 mat4 view;
 mat4 projection;
 //--- 전역 변수 선언
 GLUquadricObj* qobj = nullptr;
 Player player;
 
-typedef struct Enemy {
-	GLfloat x, y, z;
-	GLfloat dx, dy, dz;
-	GLfloat angleX, angleY, angleZ;
-	GLfloat speed;
-};
 std::vector<Enemy>g_enemies;
 int genEnemyInterval = 5000;
 
-typedef struct Building {
-	GLfloat x, y, z;
-	Vertex scale;
-};
+
 std::vector<Building>g_buildings;
 Model buildingModel;
 int numBuild = 30;
 int** maptile;
-int tilerow = 40, tilecolumn = 40;
+int tilerow = 50, tilecolumn = 50;
 
 std::vector<Bullet>g_bullets;
 
@@ -102,16 +92,15 @@ void timerFunc(int value) {
 	skyColor = 1.0 - (1.0f * (sin(glm::radians(lightAngle / 2))));
 
 	updateBullets(g_bullets);
-	MoveEnemy();
+	checkCollisionWithEnemies(g_bullets, g_enemies);
+	MoveEnemy(player.x, player.z, g_enemies);
 	setupCamera();
 	glutPostRedisplay();
 	glutTimerFunc(30, timerFunc, 0);
 }
 
-
 void genEnemyFunc(int value) {
-	InitEnemy(); // 적을 만드는 함수는 분리
-
+	InitEnemy(player.x, player.z, g_enemies); // 적을 만드는 함수는 분리
 
 	glutTimerFunc(genEnemyInterval, genEnemyFunc, 0); // 별개의 타이머 콜백으로 분리해서 사용
 }
@@ -165,9 +154,6 @@ void Mouse(int button, int state, int x, int y) {
 		if (state == GLUT_DOWN) {
 			shootBullet(player, g_bullets);
 		}
-		else if (state == GLUT_UP) {
-
-		}
 	}
 	glutPostRedisplay();
 }
@@ -215,7 +201,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	InitPlayer(qobj, player);
 	InitFloor();
 	initSphereBuffer(0.8f, 20, 20);
-	InitBuliding("obj.obj");
+	InitBuliding("obj.obj", maptile, tilerow, tilecolumn, numBuild, &buildingModel, g_buildings);
 	setupCamera();
 	glEnable(GL_DEPTH_TEST);
 
@@ -232,58 +218,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glutMainLoop();
 }
 
-void drawEnemy(GLint modelLoc) {
-	glBindVertexArray(sphereVAO);
 
-	mat4 baseModelMat = glm::translate(mat4(1.0f), vec3(0.0f, 0.0f, 0.0f)); // 적이 그려지는 도형 전체에 대한 이동
-
-
-	for (int i = 0; i < g_enemies.size(); i++) {
-		baseModelMat = glm::translate(mat4(1.0f), vec3(g_enemies[i].x, g_enemies[i].y, g_enemies[i].z));
-
-		mat4 enemyModelMat = mat4(1.0f); // 적 모델 행렬
-		glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 1.0f, 0.5f, 1.0f);
-
-		enemyModelMat *= baseModelMat;
-		enemyModelMat = glm::translate(enemyModelMat, vec3(0.0f, 2.0f, 0.0f));
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(enemyModelMat));
-		glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
-
-
-		enemyModelMat = baseModelMat;
-		enemyModelMat = glm::rotate(enemyModelMat, glm::radians(-90.0f), vec3(1.0f, 0.0f, 0.0f));
-		enemyModelMat = glm::translate(enemyModelMat, vec3(0.0f, 0.0f, 0.0f));
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(enemyModelMat));
-		gluCylinder(qobj, 0.75f, 0.75f, 1.5f, 20.0f, 8.0f);
-
-		enemyModelMat = glm::translate(enemyModelMat, vec3(0.0f, 0.0f, 0.0f));
-		enemyModelMat *= baseModelMat; // 회전한 흔적 제거
-	}
-
-
-	glBindVertexArray(enemyVAO);
-	glBindVertexArray(0); // VAO 언바인딩
-}
-
-void drawBuliding(GLint modelLoc) {
-	mat4 buildingModelMat = mat4(1.0f);
-	glBindVertexArray(buildVAO);
-	for (int i = 0; i < g_buildings.size(); i++) {
-		if (g_buildings[i].x >= -50.0f && g_buildings[i].x <= 50.0f &&
-			g_buildings[i].z >= -50.0f && g_buildings[i].z <= 50.0f) {
-			buildingModelMat = mat4(1.0f);
-			buildingModelMat *= translate(buildingModelMat, vec3(g_buildings[i].x, g_buildings[i].y, g_buildings[i].z));
-			buildingModelMat *= scale(buildingModelMat, vec3(g_buildings[i].scale.x, g_buildings[i].scale.y, g_buildings[i].scale.z));
-
-			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(buildingModelMat));
-			glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 1.0f);
-
-			glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-		}
-	}
-
-	glBindVertexArray(0);
-}
 
 //--- 출력 콜백 함수
 GLvoid drawScene() {
@@ -309,32 +244,33 @@ GLvoid drawScene() {
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(view));
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, value_ptr(projection));
 
-	drawFloor(modelLoc);
+	drawFloor(modelLoc, player);
 	drawPlayer(modelLoc, qobj, player);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
-	drawEnemy(modelLoc);
+	drawEnemy(modelLoc, qobj, g_enemies);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
-	drawBuliding(modelLoc);
+	drawBuliding(modelLoc, g_buildings, player.x, player.z);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 	drawBullets(modelLoc, player, g_bullets);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 
 	// 미니맵
+	glDisable(GL_DEPTH_TEST);
 	glViewport(WINDOW_X * 3 / 4, WINDOW_Y * 3 / 4, WINDOW_X / 4, WINDOW_Y / 4); // 오른쪽 위
 	vec3 bodyModelPosV2 = vec3(player.x, 0.0f, player.z); // bodyModel의 대략적인 위치
 	vec3 cameraPosV2 = vec3(player.x, 35.0f, player.z);
-	mat4 bodyViewV2 = lookAt(cameraPosV2, bodyModelPosV2, vec3(1.0f, 0.0f, 0.0f)); // bodyModel을 바라보는 뷰 행렬
+	mat4 bodyViewV2 = lookAt(cameraPosV2, bodyModelPosV2, vec3(cos(radians(player.angleXZ)), 0.0f, sin(radians(player.angleXZ)))); // bodyModel을 바라보는 뷰 행렬
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(bodyViewV2));
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, value_ptr(projection));
 
-	drawFloor(modelLoc);
+	drawFloor(modelLoc, player);
 	drawPlayer(modelLoc, qobj, player);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
-	drawEnemy(modelLoc);
+	drawEnemy(modelLoc, qobj, g_enemies);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
-	drawBuliding(modelLoc);
+	drawBuliding(modelLoc, g_buildings, player.x, player.z);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
-
+	glEnable(GL_DEPTH_TEST);
 
 	//--- 버퍼 스왑
 	glutSwapBuffers();
@@ -345,109 +281,10 @@ GLvoid Reshape(int w, int h) {
 	glViewport(0, 0, w, h);
 }
 
-GLfloat GetRandomNumber(int seed) {
-	// 결과값의 범위는 [-seed/2, seed/2]
-	float result = (float)((float)rand() / RAND_MAX) * seed - ((float)seed / 2.0f);
-
-	return result;
-}
-
-void InitEnemy() {
-	Enemy newenemy; // 새로 만들 적 선언
-	int enemyseed = 100; // seed 값을 지정
-
-
-	newenemy.x = GetRandomNumber(enemyseed);
-	newenemy.y = 0.0f;
-	newenemy.z = GetRandomNumber(enemyseed); // seed에 따라 좌표를 배정
-	newenemy.angleX = 0, newenemy.angleY = 0, newenemy.angleZ = 0;	// 생성 당시에는 player를 바라보지는 않는다.
-
-	newenemy.x += player.x;
-	newenemy.z += player.z;
-
-	newenemy.speed = 0.01f;
-
-	g_enemies.push_back(newenemy); // 리스트에 추가
-}
-
-void MoveEnemy() {
-	float dx = 0, dz = 0;
-	for (int i = 0; i < g_enemies.size(); i++) {
-		dx = player.x - g_enemies[i].x;
-		dz = player.z - g_enemies[i].z;
-
-		g_enemies[i].x = g_enemies[i].x + dx * g_enemies[i].speed;
-		g_enemies[i].z = g_enemies[i].z + dz * g_enemies[i].speed;
-	}
-}
-
 void DeleteEnemy(int index) {
 	g_enemies.erase(g_enemies.begin() + index);
 }
 
-void SetTile() {
-	int i = -1;
-	int j = -1;
-
-	while (true) {
-		i = (int)((float)rand() / RAND_MAX * (tilerow - 1));
-		j = (int)((float)rand() / RAND_MAX * (tilecolumn - 1));
-
-		if (maptile[i][j] <= 0) {
-			maptile[i][j] = 1;
-
-			break;
-		}
-	} 
-
-}
-
-
-void InitBuliding(const char* objFilename) {
-	maptile = InitTileArr(maptile, tilerow, tilecolumn);
-
-	for (int i = 0; i < numBuild; i++) {
-		SetTile();
-	}
-
-
-	Building building;
-
-	read_obj_file(objFilename, &buildingModel);
-
-	for (int i = 0; i < tilerow; i++) {
-		for (int j = 0; j < tilecolumn; j++) {
-			if (maptile[i][j] > 0) {
-				building = { (float)i * 5 - 100.0f, 0.0f, (float)j * 5 - 100.0f, 5.0f, 10.0f, 5.0f };
-				g_buildings.push_back(building);
-			}
-		}
-	}
 
 
 
-
-	glGenVertexArrays(1, &buildVAO);
-	glGenBuffers(1, &buildVBO);
-	glGenBuffers(1, &buildEBO);
-
-	glBindVertexArray(buildVAO);
-
-	//VBO에 데이터 등록
-	glBindBuffer(GL_ARRAY_BUFFER, buildVBO);
-	glBufferData(GL_ARRAY_BUFFER, 40 * sizeof(buildingModel.vertices), buildingModel.vertices, GL_STATIC_DRAW);
-	cout << sizeof(buildingModel.vertices) << endl;
-
-	//EBO에 데이터 등록
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buildEBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 40 * sizeof(buildingModel.faces), buildingModel.faces, GL_STATIC_DRAW);
-	cout << sizeof(buildingModel.faces) << endl;
-
-
-	// 위치 속성 지정 (attribute 0)
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)0);
-	glEnableVertexAttribArray(0);
-
-	// VAO 언바인딩
-	glBindVertexArray(0);
-}
