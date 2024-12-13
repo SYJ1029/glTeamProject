@@ -97,8 +97,9 @@ void timerFunc(int value) {
 
 	updatePlayer(player);
 	updateBullets(g_bullets);
-	checkCollisionWithEnemies(g_bullets, g_enemies);
 	MoveEnemy(player.x, player.z, g_enemies);
+	checkCollisionWithEnemies(g_bullets, g_enemies);
+	playerCollisionWithEnemy(player, g_enemies);
 	setupCamera();
 	glutPostRedisplay();
 	glutTimerFunc(30, timerFunc, 0);
@@ -316,7 +317,7 @@ GLvoid drawScene() {
 	glDisable(GL_DEPTH_TEST);
 	glViewport(WINDOW_X * 3 / 4, WINDOW_Y * 3 / 4, WINDOW_X / 4, WINDOW_Y / 4); // 오른쪽 위
 	vec3 bodyModelPosV2 = vec3(player.x, 0.0f, player.z); // bodyModel의 대략적인 위치
-	vec3 cameraPosV2 = vec3(player.x, 100.0f, player.z);
+	vec3 cameraPosV2 = vec3(player.x, 10.0f, player.z);
 	mat4 bodyViewV2 = lookAt(cameraPosV2, bodyModelPosV2, vec3(cos(radians(player.angleXZ)), 0.0f, sin(radians(player.angleXZ)))); // bodyModel을 바라보는 뷰 행렬
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(bodyViewV2));
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, value_ptr(projection));

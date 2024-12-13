@@ -87,23 +87,22 @@ void drawPlayer(GLint modelLoc, GLUquadricObj*& qobj, Player &player) {
 
 void applyGravity(Player& player) {
 	if (player.dy > 0.0f) {
-		player.dy -= 0.025f;  // 중력 감소량 조정
+		player.dy -= 0.025f;
 	}
 	else {
-		player.dy -= 0.035f;  // 하강 중 추가 중력 적용
+		player.dy -= 0.035f;
 	}
 }
 
 void jump(Player& player) {
-	player.dy += 0.3f;  // 점프 힘 증가
-	printf("%f", player.dy);
+	player.dy += 0.3f;
 }
 
 void updatePlayer(Player& player) {
 	vec3 direction = normalize(vec3(
-		cos(glm::radians(player.angleXZ)),  // X축 성분
-		0.0f,                              // Y축 (고정)
-		sin(glm::radians(player.angleXZ))  // Z축 성분
+		cos(glm::radians(player.angleXZ)),
+		0.0f,
+		sin(glm::radians(player.angleXZ))
 	));
 	player.x += player.dx * direction.x - player.dz * direction.z;
 	player.z += player.dx * direction.z + player.dz * direction.x;
@@ -112,16 +111,31 @@ void updatePlayer(Player& player) {
 		printf("%f, %f\n", player.y, player.dy);
 		player.y += player.dy;
 
-		// 바닥에 도달했을 경우
 		applyGravity(player);
 		if (player.y <= 0.0f) {
 			player.y = 0.0f;
-			player.dy = 0.0f; // 점프 상태 초기화
+			player.dy = 0.0f;
 		}
 	}
 }
 
-
 void playerCollisionWithEnemy(Player& player, std::vector<Enemy>& g_enemies) {
+	float playerRadius = 1.0f;
+	float enemyRadius = 1.0f;
+	float collisionDistance = playerRadius + enemyRadius + 1.0f;
 
+	for (auto it = g_enemies.begin(); it != g_enemies.end(); ) {
+		Enemy& enemy = *it;
+
+		float dx = abs(player.x - it->x);
+		float dz = abs(player.z - it->z);
+		float distance = sqrt(dx * dx + dz * dz);
+
+		if (distance < collisionDistance) {
+			it = g_enemies.erase(it);
+		}
+		else {
+			++it;
+		}
+	}
 }
