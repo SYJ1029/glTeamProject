@@ -4,6 +4,7 @@
 #include "shader.h"
 #include "Hexahedron.h"
 #include "pyramid.h"
+#include "Enemy.h"
 
 #include <gl/glew.h>
 #include <gl/glm/glm/glm.hpp>
@@ -31,3 +32,5 @@ void applyGravity(Player &player);
 void jump(Player& player);
 
 void updatePlayer(Player &player);
+
+void playerCollisionWithEnemy(Player& player, std::vector<Enemy>& g_enemies);

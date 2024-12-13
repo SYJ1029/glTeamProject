@@ -85,17 +85,17 @@ void setupCamera() {
 
 // 타이머 함수
 void timerFunc(int value) {
-	updatePlayer(player);
 	// 조명 위치 업데이트
 	lightAngle += 0.1f; // 회전 속도 (deg/frame)
 	if (lightAngle >= 360.0f) lightAngle -= 360.0f;
-	ambientLight = 0.5f - 0.4f * (sin(glm::radians(lightAngle/2)));
+	ambientLight = 0.5f - 0.3f * (sin(glm::radians(lightAngle/2)));
 	// 조명의 위치를 계산
 	lightPos.y = lightRadius * cos(glm::radians(lightAngle));
 	lightPos.z = lightRadius * sin(glm::radians(lightAngle));
 
 	skyColor = 1.0 - (1.0f * (sin(glm::radians(lightAngle / 2))));
 
+	updatePlayer(player);
 	updateBullets(g_bullets);
 	checkCollisionWithEnemies(g_bullets, g_enemies);
 	MoveEnemy(player.x, player.z, g_enemies);
@@ -208,7 +208,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	make_shaderProgram();
 	InitPlayer(qobj, player);
 	InitFloor();
-	initSphereBuffer(0.8f, 20, 20);
+	initSphereBuffer(1.0f, 20, 20);
 	InitBuliding("obj.obj");
 	Initbuffer();
 	InitPyramidBuffer();
@@ -316,9 +316,8 @@ GLvoid drawScene() {
 	glDisable(GL_DEPTH_TEST);
 	glViewport(WINDOW_X * 3 / 4, WINDOW_Y * 3 / 4, WINDOW_X / 4, WINDOW_Y / 4); // 오른쪽 위
 	vec3 bodyModelPosV2 = vec3(player.x, 0.0f, player.z); // bodyModel의 대략적인 위치
-	vec3 cameraPosV2 = vec3(player.x, 15.0f, player.z);
-	//mat4 bodyViewV2 = lookAt(cameraPosV2, bodyModelPosV2, vec3(cos(radians(player.angleXZ)), 0.0f, sin(radians(player.angleXZ)))); // bodyModel을 바라보는 뷰 행렬
-	mat4 bodyViewV2 = lookAt(cameraPosV2, bodyModelPosV2, vec3(-1.0f, 0.0f, 0.0f));
+	vec3 cameraPosV2 = vec3(player.x, 100.0f, player.z);
+	mat4 bodyViewV2 = lookAt(cameraPosV2, bodyModelPosV2, vec3(cos(radians(player.angleXZ)), 0.0f, sin(radians(player.angleXZ)))); // bodyModel을 바라보는 뷰 행렬
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(bodyViewV2));
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, value_ptr(projection));
 

@@ -47,16 +47,15 @@ void drawEnemy(GLint modelLoc, GLUquadricObj*& qobj, std::vector<Enemy>& g_enemi
 		glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 1.0f, 0.5f, 1.0f);
 
 		enemyModelMat *= baseModelMat;
-		enemyModelMat = glm::translate(enemyModelMat, vec3(0.0f, 2.0f, 0.0f));
+		enemyModelMat = glm::translate(enemyModelMat, vec3(0.0f, 2.7f, 0.0f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(enemyModelMat));
 		glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
-
 
 		enemyModelMat = baseModelMat;
 		enemyModelMat = glm::rotate(enemyModelMat, glm::radians(-90.0f), vec3(1.0f, 0.0f, 0.0f));
 		enemyModelMat = glm::translate(enemyModelMat, vec3(0.0f, 0.0f, 0.0f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(enemyModelMat));
-		gluCylinder(qobj, 0.75f, 0.75f, 1.5f, 20.0f, 8.0f);
+		gluCylinder(qobj, 1.0f, 1.0f, 2.0f, 20.0f, 8.0f);
 
 		enemyModelMat = glm::translate(enemyModelMat, vec3(0.0f, 0.0f, 0.0f));
 		enemyModelMat *= baseModelMat; // 회전한 흔적 제거

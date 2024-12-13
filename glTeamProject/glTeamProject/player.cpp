@@ -85,17 +85,21 @@ void drawPlayer(GLint modelLoc, GLUquadricObj*& qobj, Player &player) {
 	glBindVertexArray(0); // VAO 언바인딩
 }
 
-void applyGravity(Player &player){
+void applyGravity(Player& player) {
 	if (player.dy > 0.0f) {
-		player.dy -= 0.4f;
+		player.dy -= 0.025f;  // 중력 감소량 조정
+	}
+	else {
+		player.dy -= 0.035f;  // 하강 중 추가 중력 적용
 	}
 }
 
-void jump(Player &player){
-	player.dy += 2.0f;
+void jump(Player& player) {
+	player.dy += 0.3f;  // 점프 힘 증가
+	printf("%f", player.dy);
 }
 
-void updatePlayer(Player &player) {
+void updatePlayer(Player& player) {
 	vec3 direction = normalize(vec3(
 		cos(glm::radians(player.angleXZ)),  // X축 성분
 		0.0f,                              // Y축 (고정)
@@ -104,14 +108,20 @@ void updatePlayer(Player &player) {
 	player.x += player.dx * direction.x - player.dz * direction.z;
 	player.z += player.dx * direction.z + player.dz * direction.x;
 
-	applyGravity(player);
-	if (player.y > 0.0f || player.dy > 0.0f) {
+	if (player.y > 0.0f || player.dy < 0.0f || player.dy > 0.0f) {
+		printf("%f, %f\n", player.y, player.dy);
 		player.y += player.dy;
 
 		// 바닥에 도달했을 경우
-		if (player.y < 0.0f) {
+		applyGravity(player);
+		if (player.y <= 0.0f) {
 			player.y = 0.0f;
 			player.dy = 0.0f; // 점프 상태 초기화
 		}
 	}
+}
+
+
+void playerCollisionWithEnemy(Player& player, std::vector<Enemy>& g_enemies) {
+
 }
