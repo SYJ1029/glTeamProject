@@ -4,7 +4,7 @@
 #include "readObj.h"
 #include "rwTile.h"
 
-GLuint buildVAO, buildVBO, buildEBO;
+
 
 
 

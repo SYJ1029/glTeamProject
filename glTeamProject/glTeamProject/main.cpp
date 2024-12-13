@@ -42,10 +42,7 @@ Player player;
 std::vector<Enemy>g_enemies;
 int genEnemyInterval = 5000;
 
-typedef struct Building {
-	GLfloat x, y, z;
-	Vertex scale;
-};
+
 std::vector<Building>g_buildings;
 Model buildingModel;
 int numBuild = 30;
