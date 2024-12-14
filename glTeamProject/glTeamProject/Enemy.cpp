@@ -78,7 +78,7 @@ vec3 AStar(float playerx, float playerz, Enemy& enemy, int** maptile, int row, i
 
 void MoveEnemy(float playerx, float playerz, std::vector<Enemy>& g_enemies, int** maptile, int row, int column) {
 	float dx = 0, dz = 0;
-	printf("%d\n", &maptile[5][5]);
+
 	for (int i = 0; i < g_enemies.size(); i++) {
 		dx = playerx - g_enemies[i].x;
 		dz = playerz - g_enemies[i].z;

@@ -213,7 +213,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	InitPlayer(qobj, player);
 	InitFloor();
 	initSphereBuffer(1.0f, 20, 20);
-	InitBuliding("obj.obj", maptile, tilerow, tilecolumn, numBuild,  g_buildings);
+	maptile = InitBuliding("obj.obj", maptile, tilerow, tilecolumn, numBuild,  g_buildings);
 	Initbuffer();
 	InitPyramidBuffer();
 	setupCamera();

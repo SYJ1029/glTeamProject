@@ -10,7 +10,7 @@
 
 
 
-void InitBuliding(const char* objFilename, int** maptile, int& tilerow, int& tilecolumn, int numBuild, 
+int** InitBuliding(const char* objFilename, int** maptile, int& tilerow, int& tilecolumn, int numBuild, 
 	std::vector<Building>& g_buildings) {
 	maptile = InitTileArr(maptile, tilerow, tilecolumn);
 
@@ -58,6 +58,8 @@ void InitBuliding(const char* objFilename, int** maptile, int& tilerow, int& til
 
 	// VAO 언바인딩
 	glBindVertexArray(0);
+
+	return maptile;
 }
 
 
