@@ -65,8 +65,8 @@ void updateBullets(std::vector<Bullet>& g_bullets) {
         g_bullets[i].y += g_bullets[i].dy;
         g_bullets[i].z += g_bullets[i].dz;
 
-        if (g_bullets[i].x > 100.0f || g_bullets[i].x < -100.0f ||
-            g_bullets[i].z > 100.0f || g_bullets[i].z < -100.0f) {
+        if (g_bullets[i].x > 50.0f || g_bullets[i].x < -50.0f ||
+            g_bullets[i].z > 50.0f || g_bullets[i].z < -50.0f) {
             g_bullets.erase(g_bullets.begin() + i);
             i--;
         }

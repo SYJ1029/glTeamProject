@@ -38,49 +38,38 @@ void drawPlayer(GLint modelLoc, GLUquadricObj*& qobj, Player &player) {
 	glBindVertexArray(hexVao);
 	float radius = 1.8f;
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.2f, 0.2f, 0.2f);
-	//손잡이
-	mat4 gumModelHandle = playerModelMat;
-	gumModelHandle = glm::translate(gumModelHandle, vec3(0.0f, 0.0f, 1.7f));
-	gumModelHandle = glm::rotate(gumModelHandle, glm::radians(90.0f), vec3(1.0f, 0.0f, 0.0f));
-	gumModelHandle = translate(gumModelHandle, vec3(radius * glm::cos(radians(player.angleXZ + 8.0f)), 0.0f, radius * glm::sin(radians(player.angleXZ + 8.0f))));
-	gumModelHandle = glm::rotate(gumModelHandle, glm::radians(-player.angleXZ), vec3(0.0f, 1.0f, 0.0f));
-	gumModelHandle = scale(gumModelHandle, vec3(0.1f, 0.1f, 0.1f));
-	gumModelHandle = glm::translate(gumModelHandle, vec3(-1.0f, 0.0f, 0.0f));
-	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(gumModelHandle));
-	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 	//몸
-	mat4 gumModelBody = playerModelMat;
-	gumModelBody = glm::translate(gumModelBody, vec3(0.0f, 0.0f, 1.8f));
-	gumModelBody = glm::rotate(gumModelBody, glm::radians(90.0f), vec3(1.0f, 0.0f, 0.0f));
-	gumModelBody = translate(gumModelBody, vec3(radius * glm::cos(radians(player.angleXZ + 8.0f)), 0.0f, radius * glm::sin(radians(player.angleXZ + 8.0f))));
-	gumModelBody = glm::rotate(gumModelBody, glm::radians(-player.angleXZ), vec3(0.0f, 1.0f, 0.0f));
-	gumModelBody = scale(gumModelBody, vec3(0.1f, 0.1f, 0.1f));
-	gumModelBody = glm::translate(gumModelBody, vec3(-1.0f, 0.0f, 0.0f));
-	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(gumModelBody));
+	mat4 gunModelBody = playerModelMat;
+	gunModelBody = glm::translate(gunModelBody, vec3(0.0f, 0.0f, 1.8f));
+	gunModelBody = glm::rotate(gunModelBody, glm::radians(90.0f), vec3(1.0f, 0.0f, 0.0f));
+	gunModelBody = translate(gunModelBody, vec3(radius * glm::cos(radians(player.angleXZ + 8.0f)), -1.0f / 90.0f * player.angleY, radius * glm::sin(radians(player.angleXZ + 8.0f))));
+	gunModelBody = glm::rotate(gunModelBody, glm::radians(-player.angleXZ), vec3(0.0f, 1.0f, 0.0f));
+	gunModelBody = glm::rotate(gunModelBody, glm::radians(-player.angleY), vec3(0.0f, 0.0f, 1.0f));
+	gunModelBody = scale(gunModelBody, vec3(0.1f, 0.1f, 0.1f));
+	gunModelBody = glm::translate(gunModelBody, vec3(-1.0f, 0.0f, 0.0f));
+	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(gunModelBody));
 	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+	//손잡이
+	mat4 gunModelHandle = gunModelBody;
+	gunModelHandle = glm::translate(gunModelHandle, vec3(0.0f, -1.0f, 0.0f));
+	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(gunModelHandle));
+	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
 	// 총구
 	if (!player.gun) {
-		mat4 gumModelShoot = playerModelMat;
-		gumModelShoot = glm::translate(gumModelShoot, vec3(0.0f, 0.0f, 1.8f));
-		gumModelShoot = glm::rotate(gumModelShoot, glm::radians(90.0f), vec3(1.0f, 0.0f, 0.0f));
-		gumModelShoot = translate(gumModelShoot, vec3(radius * glm::cos(radians(player.angleXZ + 8.0f)), 0.0f, radius * glm::sin(radians(player.angleXZ + 8.0f))));
-		gumModelShoot = glm::rotate(gumModelShoot, glm::radians(-player.angleXZ), vec3(0.0f, 1.0f, 0.0f));
-		gumModelShoot = scale(gumModelShoot, vec3(0.2f, 0.1f, 0.1f));
-		gumModelShoot = glm::translate(gumModelShoot, vec3(0.26f, 0.0f, 0.0f));
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(gumModelShoot));
+		mat4 gunModelShoot = gunModelBody;
+		gunModelShoot = glm::translate(gunModelShoot, vec3(1.5f, 0.0f, 0.0f));
+		gunModelShoot = glm::scale(gunModelShoot, vec3(2.0f, 1.0f, 1.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(gunModelShoot));
 		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 	}
 	else {
 		glBindVertexArray(pyramidVao);
-		mat4 gumModelShoot = playerModelMat;
-		gumModelShoot = glm::translate(gumModelShoot, vec3(0.0f, 0.0f, 1.8f));
-		gumModelShoot = glm::rotate(gumModelShoot, glm::radians(90.0f), vec3(1.0f, 0.0f, 0.0f));
-		gumModelShoot = translate(gumModelShoot, vec3(radius * glm::cos(radians(player.angleXZ + 8.0f)), 0.0f, radius * glm::sin(radians(player.angleXZ + 8.0f))));
-		gumModelShoot = glm::rotate(gumModelShoot, glm::radians(-player.angleXZ), vec3(0.0f, 1.0f, 0.0f));
-		gumModelShoot = scale(gumModelShoot, vec3(0.5f, 0.1f, 0.1f));
-		gumModelShoot = glm::translate(gumModelShoot, vec3(0.4f, 0.0f, 0.0f));
-		gumModelShoot = glm::rotate(gumModelShoot, glm::radians(-90.0f), vec3(0.0f, 0.0f, 1.0f));
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(gumModelShoot));
+		mat4 gunModelShoot = gunModelBody;
+		gunModelShoot = glm::rotate(gunModelShoot, glm::radians(-90.0f), vec3(0.0f, 0.0f, 1.0f));
+		gunModelShoot = glm::translate(gunModelShoot, vec3(0.0f, 2.0f, 0.0f));
+		gunModelShoot = glm::scale(gunModelShoot, vec3(1.0f, 3.0f, 1.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(gunModelShoot));
 		glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_INT, 0);
 	}
 	glBindVertexArray(0); // VAO 언바인딩
