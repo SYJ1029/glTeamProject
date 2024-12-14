@@ -73,7 +73,8 @@ void setupCamera() {
 	cameraPos.z = player.z + radius * sin(glm::radians(player.angleXZ));
 
 	cameraDirection.x = player.x + 2 * (radius * cos(glm::radians(player.angleXZ)));
-	cameraDirection.y = cameraPos.y;
+	cameraDirection.y = cameraPos.y - (1.0f / 90.0f) * player.angleY;
+
 	cameraDirection.z = player.z + 2 * (radius * sin(glm::radians(player.angleXZ)));
 
 	view = lookAt(cameraPos, cameraDirection, cameraUp);
@@ -179,7 +180,13 @@ void PassiveMotion(int x, int y) {
 
 		float angleIncrement = 0.1f;
 		player.angleXZ += deltaX * angleIncrement;
-
+		player.angleY += deltaY * angleIncrement;
+		if (player.angleY >= 45.0f) {
+			player.angleY = 45.0f;
+		}
+		else if (player.angleY <= -45.0f) {
+			player.angleY = -45.0f;
+		}
 		if (player.angleXZ >= 360.0f) player.angleXZ -= 360.0f;
 		if (player.angleXZ < 0.0f) player.angleXZ += 360.0f;
 
