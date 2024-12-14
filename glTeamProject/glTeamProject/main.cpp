@@ -97,6 +97,7 @@ void timerFunc(int value) {
 	MoveEnemy(player.x, player.z, g_enemies);
 	checkCollisionWithEnemies(g_bullets, g_enemies);
 	playerCollisionWithEnemy(player, g_enemies);
+	BuildingCollisionBullet(g_buildings, g_bullets);
 	setupCamera();
 	glutPostRedisplay();
 	glutTimerFunc(30, timerFunc, 0);

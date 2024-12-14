@@ -21,3 +21,7 @@ bool CollisionCheckRect(vec3 pos, vec3 rectPosLow, vec3 rectPosHigh) {
 
 	return false;
 }
+
+bool ViewVolumeRect(vec3 pos, vec3 rectpos, vec3 rectPosLow, vec3 rectPosHigh) {
+	return distance(pos, rectpos) <= distance(rectPosLow, rectPosHigh) / 2;
+}

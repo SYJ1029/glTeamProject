@@ -127,9 +127,31 @@ bool BuildingCollisionPlayer(std::vector<Building>& g_buildings, Player& player)
 }
 
 bool BuildingCollisionBullet(std::vector<Building>& g_buildings, std::vector<Bullet>& g_bullets) {
+	glm::vec3 pos1, pos2;
+	std::vector<int> erasebulletlist;
+	for (int i = 0; i < g_buildings.size(); i++) {
+		pos1 = { g_buildings[i].x, 0.0f, g_buildings[i].z };
+		pos2 = { g_buildings[i].x + g_buildings[i].scale.x, 0.0f, g_buildings[i].z + g_buildings[i].scale.z };
+		for (int j = 0; j < g_bullets.size(); j++) {
+			if (CollisionCheckRect({g_bullets[j].x, g_bullets[j].y, g_bullets[j].z}, pos1, pos2)) {
+				erasebulletlist.push_back(j);
+				break; // 충돌했다면 더 이상 탐색할 필요가 없음
+			}
+		}
+	}
 
+	int subcount = 0;
+
+	for (int i = 0; i < erasebulletlist.size(); i++) {
+ 		g_bullets.erase(g_bullets.begin() + erasebulletlist[i] - subcount);
+		subcount++;
+	}
+
+	erasebulletlist.clear();
 	return false;
 }
+
+
 bool BuildingCollisionEnemy(std::vector<Building>& g_buildings, std::vector<Enemy>& g_enemies) {
 
 	return false;
