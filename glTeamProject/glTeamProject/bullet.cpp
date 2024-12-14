@@ -1,20 +1,45 @@
 #include "bullet.h"
 
 void shootBullet(Player& player, std::vector<Bullet>& g_bullets) {
-    Bullet newBullet;
     glm::vec3 direction = glm::normalize(vec3(
         cos(glm::radians(player.angleXZ)), // X축 방향
         0.0f,                              // Y축 (수평)
         sin(glm::radians(player.angleXZ))  // Z축 방향
     ));
 
-    newBullet = { player.x, player.y + 1.95f, player.z };
-    newBullet.dx = direction.x;
-    newBullet.dy = direction.y;
-    newBullet.dz = direction.z;
-    newBullet.speed = 2.0f;
+    if (player.gun) {
+        Bullet newBullet;
+        newBullet = { player.x, player.y + 1.95f, player.z };
+        newBullet.dx = direction.x;
+        newBullet.dy = direction.y;
+        newBullet.dz = direction.z;
+        newBullet.speed = 1.0f;
 
-    g_bullets.push_back(newBullet);
+        g_bullets.push_back(newBullet);
+    }
+    else {
+        int numBullets = 5; // 한 번에 발사할 총알의 수
+        float spreadAngle = 30.0f; // 중심 각도로부터 최대 퍼짐 각도
+
+        for (int i = 0; i < numBullets; i++) {
+            float angleOffset = spreadAngle * ((float)i / (numBullets - 1) * 2.0f - 1.0f); // -10도에서 +10도로 변화
+            glm::vec3 direction = glm::normalize(glm::vec3(
+                cos(glm::radians(player.angleXZ + angleOffset)), // X축 방향 조정
+                0.0f,                                            // Y축 (수평)
+                sin(glm::radians(player.angleXZ + angleOffset))  // Z축 방향 조정
+            ));
+
+            Bullet newBullet;
+            newBullet = { player.x, player.y + 1.95f, player.z };   
+            newBullet.dx = direction.x;
+            newBullet.dy = direction.y;
+            newBullet.dz = direction.z;
+            newBullet.speed = 1.0f;
+            printf("%f, %f\n", newBullet.dx, newBullet.dz);
+
+            g_bullets.push_back(newBullet);
+        }
+    }
 }
 
 void drawBullets(GLint modelLoc, Player& player, std::vector<Bullet>& g_bullets) {

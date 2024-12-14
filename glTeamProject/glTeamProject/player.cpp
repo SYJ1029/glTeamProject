@@ -133,6 +133,7 @@ void playerCollisionWithEnemy(Player& player, std::vector<Enemy>& g_enemies) {
 
 		if (distance < collisionDistance) {
 			it = g_enemies.erase(it);
+			// 일단은 지움 로직 추가해야함.
 		}
 		else {
 			++it;
