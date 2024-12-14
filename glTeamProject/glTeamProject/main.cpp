@@ -95,7 +95,7 @@ void timerFunc(int value) {
 
 	updatePlayer(player, BuildingCollisionPlayer(g_buildings, player));
 	updateBullets(g_bullets);
-	MoveEnemy(player.x, player.z, g_enemies);
+	MoveEnemy(player.x, player.z, g_enemies, maptile, tilerow, tilecolumn);
 	checkCollisionWithEnemies(g_bullets, g_enemies);
 	playerCollisionWithEnemy(player, g_enemies);
 	BuildingCollisionBullet(g_buildings, g_bullets);

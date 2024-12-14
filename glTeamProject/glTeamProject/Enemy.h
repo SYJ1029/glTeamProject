@@ -21,5 +21,6 @@ typedef struct Enemy {
 
 
 void InitEnemy(float playerx, float playerz, std::vector<Enemy>& g_enemies);
-void MoveEnemy(float playerx, float playerz, std::vector<Enemy>& g_enemies);
+void MoveEnemy(float playerx, float playerz, std::vector<Enemy>& g_enemies, int** maptile, int row, int column);
 void drawEnemy(GLint modelLoc, GLUquadricObj*& qobj, std::vector<Enemy>& g_enemies);
+vec3 AStar(float playerx, float playerz, Enemy& enemy, int** maptile, int row, int column);
