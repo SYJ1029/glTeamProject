@@ -10,7 +10,6 @@
 
 
 
-
 void InitBuliding(const char* objFilename, int** maptile, int& tilerow, int& tilecolumn, int numBuild, 
 	std::vector<Building>& g_buildings) {
 	maptile = InitTileArr(maptile, tilerow, tilecolumn);
@@ -91,8 +90,12 @@ void ConcatenateTile(int index, std::vector<Building>& g_buildings, float dx, fl
 	}
 }
 
-void drawBuliding(GLint modelLoc, std::vector<Building>& g_buildings, float dx, float dz, int** maptile, int row, int column) {
+void drawBuliding(GLint modelLoc, std::vector<Building>& g_buildings, float dx, float dz, int** maptile, int row, int column, bool nvd) {
 	glBindVertexArray(buildVAO);
+	glUniform1i(glGetUniformLocation(shaderProgramID, "objtype"), 2);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	for (int i = 0; i < g_buildings.size(); i++) {
 		//ConcatenateTile(i, g_buildings,  dx, dz, maptile, row, column);
 		if (g_buildings[i].x >= -50.0f + dx && g_buildings[i].x <= 50.0f + dx &&
@@ -104,10 +107,17 @@ void drawBuliding(GLint modelLoc, std::vector<Building>& g_buildings, float dx, 
 			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(buildingModelMat));
 			glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 1.0f);
 
-			glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+			if(nvd)
+				glUniform1f(glGetUniformLocation(shaderProgramID, "buildalpha"), 0.2f);
+			else
+				glUniform1f(glGetUniformLocation(shaderProgramID, "buildalpha"), 1.0f);
 		}
+			glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 	}
 
+
+	glUniform1i(glGetUniformLocation(shaderProgramID, "objtype"), 0);
+	glDisable(GL_BLEND);
 	glBindVertexArray(0);
 }
 

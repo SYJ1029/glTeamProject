@@ -48,6 +48,7 @@ Model buildingModel;
 int numBuild = 30;
 int** maptile;
 int tilerow = 50, tilecolumn = 50;
+bool onNVD = false;
 
 std::vector<Bullet>g_bullets;
 
@@ -131,6 +132,9 @@ void keyboard(unsigned char key, int x, int y) {
 	case '\t':
 		player.gun = !player.gun;
 		break;
+	case '1':
+		onNVD = !(onNVD);
+		break;
 	case 'q':
 		exit(0);
 		break;
@@ -152,6 +156,7 @@ void keyboardUp(unsigned char key, int x, int y) {
 	case 'd':
 		player.dz = 0.0f;
 		break;
+
 	}
 	glutPostRedisplay();
 }
@@ -243,7 +248,8 @@ GLvoid drawScene() {
 	glUniform3f(glGetUniformLocation(shaderProgramID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);		// 조명 위치 고정
 	glUniform3f(glGetUniformLocation(shaderProgramID, "lightColor"), 1.0f, 1.0f, 1.0f);						// 조명 색상
 	glUniform3f(glGetUniformLocation(shaderProgramID, "viewPos"), cameraPos.x, cameraPos.y, cameraPos.z);	// 카메라 위치
-	glUniform1f(glGetUniformLocation(shaderProgramID, "ambientLight"), ambientLight);						// 주변광
+	glUniform1f(glGetUniformLocation(shaderProgramID, "ambientLight"), ambientLight); // 주변광
+	glUniform1i(glGetUniformLocation(shaderProgramID, "objtype"), 0);
 
 	//--- 안개
 	glUniform1f(glGetUniformLocation(shaderProgramID, "fogStart"), 40.0f);
@@ -262,7 +268,7 @@ GLvoid drawScene() {
 	drawFloor(modelLoc, player);
 	drawPlayer(modelLoc, qobj, player);
 	drawEnemy(modelLoc, qobj, g_enemies);
-	drawBuliding(modelLoc, g_buildings, player.x, player.z, maptile, tilerow, tilecolumn);
+	drawBuliding(modelLoc, g_buildings, player.x, player.z, maptile, tilerow, tilecolumn, onNVD);
 	drawBullets(modelLoc, player, g_bullets);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 
@@ -278,7 +284,7 @@ GLvoid drawScene() {
 	drawFloor(modelLoc, player);
 	drawPlayer(modelLoc, qobj, player);
 	drawEnemy(modelLoc, qobj, g_enemies);
-	drawBuliding(modelLoc, g_buildings, player.x, player.z, maptile, tilerow, tilecolumn);
+	drawBuliding(modelLoc, g_buildings, player.x, player.z, maptile, tilerow, tilecolumn, onNVD);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 	glEnable(GL_DEPTH_TEST);
 

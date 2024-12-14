@@ -11,6 +11,8 @@ uniform vec3 lightColor; // 조명 색상
 uniform vec3 viewPos;    // 월드 좌표에서의 카메라 위치
 uniform float ambientLight; // 주변광
 uniform vec3 objectColor;   // 색상값
+uniform float buildalpha;
+uniform int objtype;
 
 uniform float fogStart;  // 안개가 시작되는 거리
 uniform float fogEnd;    // 안개가 완전히 짙어지는 거리
@@ -45,5 +47,11 @@ void main() {
 
     // Combine the fog effect with the final color
     vec3 finalResult = mix(result, fogColor, fogFactor);
-    FragColor = vec4(finalResult, 1.0);
+
+    if(objtype == 2){
+        FragColor = vec4(finalResult, buildalpha);
+    }
+    else{
+        FragColor = vec4(finalResult, 1.0);
+    }
 }
