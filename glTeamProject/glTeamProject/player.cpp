@@ -1,4 +1,5 @@
 #include "player.h"
+#include "Building.h"
 
 void InitPlayer(GLUquadricObj* &qobj, Player &player) {
 	// 플레이어 모델용 Quadric 생성
@@ -98,14 +99,17 @@ void jump(Player& player) {
 	player.dy += 0.3f;
 }
 
-void updatePlayer(Player& player) {
+void updatePlayer(Player& player, bool buildcollision) {
 	vec3 direction = normalize(vec3(
 		cos(glm::radians(player.angleXZ)),
 		0.0f,
 		sin(glm::radians(player.angleXZ))
 	));
-	player.x += player.dx * direction.x - player.dz * direction.z;
-	player.z += player.dx * direction.z + player.dz * direction.x;
+
+	if (buildcollision == false) {
+		player.x += player.dx * direction.x - player.dz * direction.z;
+		player.z += player.dx * direction.z + player.dz * direction.x;
+	}
 
 	if (player.y > 0.0f || player.dy < 0.0f || player.dy > 0.0f) {
 		printf("%f, %f\n", player.y, player.dy);
@@ -117,6 +121,24 @@ void updatePlayer(Player& player) {
 			player.dy = 0.0f;
 		}
 	}
+}
+
+float GetNextXZ(Player& player, int option) {
+	vec3 direction = normalize(vec3(
+		cos(glm::radians(player.angleXZ)),
+		0.0f,
+		sin(glm::radians(player.angleXZ))
+	));
+
+	switch (option) {
+	case 0:
+		return player.x + player.dx * direction.x - player.dz * direction.z;
+	case 1:
+		return player.y;
+	case 2:
+		return player.z + player.dx * direction.z + player.dz * direction.x;
+	}
+
 }
 
 void playerCollisionWithEnemy(Player& player, std::vector<Enemy>& g_enemies) {

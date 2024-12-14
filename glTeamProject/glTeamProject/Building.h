@@ -10,6 +10,7 @@
 #include <gl/glm/glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <stdlib.h>
+#include "bullet.h"
 
 using namespace std;
 using namespace glm;
@@ -22,6 +23,9 @@ typedef struct Building {
 extern GLuint buildVAO, buildVBO, buildEBO;
 
 void InitBuliding(const char* objFilename, int** maptile, int& tilerow, int& tilecolumn, 
-	int numBuild, Model* buildingModel, std::vector<Building>& g_buildings);
-void ConcatenateTile(int index, std::vector<Building>& g_buildings, float dx, float dz);
-void drawBuliding(GLint modelLoc, std::vector<Building>& g_buildings, float dx, float dz);
+	int numBuild, std::vector<Building>& g_buildings);
+void ConcatenateTile(int index, std::vector<Building>& g_buildings, float dx, float dz, int** maptile, int row, int column);
+void drawBuliding(GLint modelLoc, std::vector<Building>& g_buildings, float dx, float dz, int** maptile, int row, int column);
+bool BuildingCollisionPlayer(std::vector<Building>& g_buildings, Player& player);
+bool BuildingCollisionBullet(std::vector<Building>& g_buildings, std::vector<Bullet>& g_bullets);
+bool BuildingCollisionEnemy(std::vector<Building>& g_buildings, std::vector<Enemy>& g_enemies);

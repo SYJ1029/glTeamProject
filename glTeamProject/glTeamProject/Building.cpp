@@ -3,13 +3,16 @@
 #include "Building.h"
 #include "readObj.h"
 #include "rwTile.h"
+#include "player.h"
+#include "Enemy.h"
+#include "Collision.h"
 
 
 
 
 
 void InitBuliding(const char* objFilename, int** maptile, int& tilerow, int& tilecolumn, int numBuild, 
-	Model* buildingModel, std::vector<Building>& g_buildings) {
+	std::vector<Building>& g_buildings) {
 	maptile = InitTileArr(maptile, tilerow, tilecolumn);
 
 	for (int i = 0; i < numBuild; i++) {
@@ -18,7 +21,7 @@ void InitBuliding(const char* objFilename, int** maptile, int& tilerow, int& til
 
 
 	Building building;
-
+	Model* buildingModel = new Model;
 	read_obj_file(objFilename, buildingModel);
 
 	for (int i = 0; i < tilerow; i++) {
@@ -60,7 +63,7 @@ void InitBuliding(const char* objFilename, int** maptile, int& tilerow, int& til
 
 
 
-void ConcatenateTile(int index, std::vector<Building>& g_buildings, float dx, float dz) {
+void ConcatenateTile(int index, std::vector<Building>& g_buildings, float dx, float dz, int** maptile, int row, int column) {
 	float clipx = abs(dx) - 50.0f;
 	float clipz = abs(dz) - 50.0f;
 
@@ -69,6 +72,7 @@ void ConcatenateTile(int index, std::vector<Building>& g_buildings, float dx, fl
 			// player.x < 0 은 좌측으로 잘렸음을 의미
 
 			g_buildings[index].x -= 100.0f; // 끝으로 이동한다.
+			ShiftTileMatrix(maptile, -1, row, column);
 		}
 		else { // player.x = 0인 경우는 고려할 필요가 없음.
 			g_buildings[index].x += 100.0f; // 반대 끝으로 이동한다.
@@ -87,10 +91,10 @@ void ConcatenateTile(int index, std::vector<Building>& g_buildings, float dx, fl
 	}
 }
 
-void drawBuliding(GLint modelLoc, std::vector<Building>& g_buildings, float dx, float dz) {
+void drawBuliding(GLint modelLoc, std::vector<Building>& g_buildings, float dx, float dz, int** maptile, int row, int column) {
 	glBindVertexArray(buildVAO);
 	for (int i = 0; i < g_buildings.size(); i++) {
-		ConcatenateTile(i, g_buildings,  dx, dz);
+		//ConcatenateTile(i, g_buildings,  dx, dz, maptile, row, column);
 		if (g_buildings[i].x >= -50.0f + dx && g_buildings[i].x <= 50.0f + dx &&
 			g_buildings[i].z >= -50.0f + dz && g_buildings[i].z <= 50.0f + dz) {
 			mat4 buildingModelMat = mat4(1.0f);
@@ -105,4 +109,28 @@ void drawBuliding(GLint modelLoc, std::vector<Building>& g_buildings, float dx, 
 	}
 
 	glBindVertexArray(0);
+}
+
+
+bool BuildingCollisionPlayer(std::vector<Building>& g_buildings, Player& player) {
+	glm::vec3 pos1, pos2;
+	for (int i = 0; i < g_buildings.size(); i++) {
+		pos1 = { g_buildings[i].x, 0.0f, g_buildings[i].z};
+		pos2 = { g_buildings[i].x + g_buildings[i].scale.x, 0.0f, g_buildings[i].z + g_buildings[i].scale.z};
+
+		if (CollisionCheckRect({ GetNextXZ(player, 0), player.y, GetNextXZ(player, 2) }, pos1, pos2)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool BuildingCollisionBullet(std::vector<Building>& g_buildings, std::vector<Bullet>& g_bullets) {
+
+	return false;
+}
+bool BuildingCollisionEnemy(std::vector<Building>& g_buildings, std::vector<Enemy>& g_enemies) {
+
+	return false;
 }

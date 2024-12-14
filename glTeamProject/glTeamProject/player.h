@@ -31,6 +31,8 @@ void applyGravity(Player &player);
 
 void jump(Player& player);
 
-void updatePlayer(Player &player);
+void updatePlayer(Player &player, bool build);
 
 void playerCollisionWithEnemy(Player& player, std::vector<Enemy>& g_enemies);
+
+float GetNextXZ(Player& player, int option);
