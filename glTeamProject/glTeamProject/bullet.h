@@ -15,7 +15,6 @@ using namespace glm;
 typedef struct Bullet {
 	GLfloat x, y, z;
 	GLfloat dx, dy, dz;
-	GLfloat speed;
 };
 
 void shootBullet(Player& player, std::vector<Bullet>& g_bullets);
