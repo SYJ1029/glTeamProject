@@ -45,8 +45,8 @@ vec3 AStar(float playerx, float playerz, Enemy& enemy, int** maptile, int row, i
 	int pj = (int)((playerz + 100.0f) / 5.0f);
 
 	// 2. 직선거리방향 타일 정의
-	int dx = normalize(vec3(playerx - enemy.x, 0.0f, 0.0f)).x;
-	int dz = normalize(vec3(0.0f, 0.0f, playerz - enemy.z)).z;
+	int dx = vec3(playerx - enemy.x, 0.0f, 0.0f).x;
+	int dz = vec3(0.0f, 0.0f, playerz - enemy.z).z;
 
 	// 3. 최단거리방향 타일이 비어있는지 검사
 	
@@ -73,7 +73,7 @@ vec3 AStar(float playerx, float playerz, Enemy& enemy, int** maptile, int row, i
 	
 	if (result.z < -1) return vec3(0, 0, 0); // 잘못된 값이 나왔다면 일단 정지시킨다.
 
-	return normalize(vec3(i + result.x, 0.0f, j + result.z)); // 계산 결과를 정규화 하여 반환
+	return vec3(i + result.x, 0.0f, j + result.z); // 계산 결과를 정규화 하여 반환
 }
 
 void MoveEnemy(float playerx, float playerz, std::vector<Enemy>& g_enemies, int** maptile, int row, int column) {
