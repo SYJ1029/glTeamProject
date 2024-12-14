@@ -42,8 +42,9 @@ void drawPlayer(GLint modelLoc, GLUquadricObj*& qobj, Player &player) {
 	mat4 gunModelBody = playerModelMat;
 	gunModelBody = glm::translate(gunModelBody, vec3(0.0f, 0.0f, 1.8f));
 	gunModelBody = glm::rotate(gunModelBody, glm::radians(90.0f), vec3(1.0f, 0.0f, 0.0f));
-	gunModelBody = translate(gunModelBody, vec3(radius * glm::cos(radians(player.angleXZ + 8.0f)), -1.0f / 90.0f * player.angleY, radius * glm::sin(radians(player.angleXZ + 8.0f))));
+	gunModelBody = translate(gunModelBody, vec3(radius * glm::cos(radians(player.angleXZ)), 0.0f, radius * glm::sin(radians(player.angleXZ)))); //  + 8.0f
 	gunModelBody = glm::rotate(gunModelBody, glm::radians(-player.angleXZ), vec3(0.0f, 1.0f, 0.0f));
+	gunModelBody = translate(gunModelBody, vec3(-(radius - (radius * glm::cos(radians(-player.angleY)))), radius * glm::sin(radians(-player.angleY)), 0.0f));
 	gunModelBody = glm::rotate(gunModelBody, glm::radians(-player.angleY), vec3(0.0f, 0.0f, 1.0f));
 	gunModelBody = scale(gunModelBody, vec3(0.1f, 0.1f, 0.1f));
 	gunModelBody = glm::translate(gunModelBody, vec3(-1.0f, 0.0f, 0.0f));
