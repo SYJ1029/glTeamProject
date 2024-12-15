@@ -1,42 +1,35 @@
 #include "bullet.h"
 
-void shootBullet(Player& player, std::vector<Bullet>& g_bullets) {
+void shootBullet(Player& player, std::vector<Bullet>& g_bullets, glm::vec3 cameraDirection) {
     if (player.gun) {
-        glm::vec3 direction = glm::normalize(glm::vec3(
-            cos(glm::radians(player.angleXZ)), // X축 방향
-            -(1.0f / 90.0f) * player.angleY,  // Y축
-            sin(glm::radians(player.angleXZ))   // Z축 방향
-        ));
-
         Bullet newBullet;
-        newBullet = { player.x, player.y + 1.95f, player.z };
-        newBullet.dx = direction.x;
-        newBullet.dy = direction.y;
-        newBullet.dz = direction.z;
+        newBullet = { player.gunMuzzleWorldPositionVec3.x, player.gunMuzzleWorldPositionVec3.y, player.gunMuzzleWorldPositionVec3.z };
+        newBullet.dx = cameraDirection.x;
+        newBullet.dy = cameraDirection.y;
+        newBullet.dz = cameraDirection.z;
         newBullet.damage = 2;
-        printf("%f, %f, %f, %f\n", newBullet.dx, newBullet.dz, newBullet.x, newBullet.z);
 
         g_bullets.push_back(newBullet);
     }
-    else {
+    else if(!player.gun){
         int numBullets = 5; // 한 번에 발사할 총알의 수
         float spreadAngle = 10.0f; // 중심 각도로부터 최대 퍼짐 각도
 
         for (int i = 0; i < numBullets; i++) {
             float angleOffset = spreadAngle * ((float)i / (numBullets - 1) * 2.0f - 1.0f); // -10도에서 +10도로 변화
-            glm::vec3 direction = glm::normalize(glm::vec3(
-                cos(glm::radians(player.angleXZ + angleOffset)), // X축 방향 조정
-                0.0f,                                            // Y축 (수평)
-                sin(glm::radians(player.angleXZ + angleOffset))  // Z축 방향 조정
+
+            glm::vec3 spreadDirection = glm::normalize(glm::vec3(
+                cameraDirection.x * cos(glm::radians(angleOffset)) - cameraDirection.z * sin(glm::radians(angleOffset)),
+                cameraDirection.y,
+                cameraDirection.x * sin(glm::radians(angleOffset)) + cameraDirection.z * cos(glm::radians(angleOffset))
             ));
 
             Bullet newBullet;
-            newBullet = { player.x, player.y + 1.95f, player.z };   
-            newBullet.dx = direction.x;
-            newBullet.dy = direction.y;
-            newBullet.dz = direction.z;
+            newBullet = { player.gunMuzzleWorldPositionVec3.x, player.gunMuzzleWorldPositionVec3.y, player.gunMuzzleWorldPositionVec3.z };
+            newBullet.dx = spreadDirection.x;
+            newBullet.dy = spreadDirection.y;
+            newBullet.dz = spreadDirection.z;
             newBullet.damage = 1;
-            printf("%f, %f, %f, %f\n", newBullet.dx, newBullet.dz, newBullet.x, newBullet.z);
 
             g_bullets.push_back(newBullet);
         }
@@ -50,7 +43,7 @@ void drawBullets(GLint modelLoc, Player& player, std::vector<Bullet>& g_bullets)
     mat4 bulletModel;
     for (const Bullet& bullet : g_bullets) {
         bulletModel = mat4(1.0f);
-        bulletModel = translate(bulletModel, vec3(bullet.x + radius * glm::cos(radians(player.angleXZ)), bullet.y  - (1.0f / 180.0f * player.angleY), bullet.z + radius * glm::sin(radians(player.angleXZ))));
+        bulletModel = translate(bulletModel, vec3(bullet.x, bullet.y, bullet.z));
         bulletModel = scale(bulletModel, vec3(0.01f, 0.01f, 0.01f)); // 총알 크기 조정
 
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(bulletModel));
@@ -107,8 +100,15 @@ void checkCollisionWithEnemies(std::vector<Bullet>& g_bullets, std::vector<Enemy
 
         // 가장 가까운 적과 충돌이 발생했다면 해당 적을 제거
         if (closestEnemyIndex != -1) {
-            // 변경해야함
-            g_enemies[closestEnemyIndex].hp -= g_bullets[i].damage;
+            if (bullet.y < 2.0f) {
+                printf("body\n");
+                g_enemies[closestEnemyIndex].hp -= g_bullets[i].damage;
+            }
+            else {
+                printf("head\n");
+                addParticles(glm::vec3(g_enemies[closestEnemyIndex].x, g_enemies[closestEnemyIndex].y, g_enemies[closestEnemyIndex].z));
+                g_enemies[closestEnemyIndex].hp -= 10;
+            }
             //g_enemies.erase(g_enemies.begin() + closestEnemyIndex);
             collided = true;
         }
@@ -120,4 +120,3 @@ void checkCollisionWithEnemies(std::vector<Bullet>& g_bullets, std::vector<Enemy
         }
     }
 }
-

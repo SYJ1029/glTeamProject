@@ -135,6 +135,7 @@
     <ClCompile Include="Enemy.cpp" />
     <ClCompile Include="floor.cpp" />
     <ClCompile Include="Hexahedron.cpp" />
+    <ClCompile Include="particle.cpp" />
     <ClCompile Include="pyramid.cpp" />
     <ClCompile Include="player.cpp" />
     <ClCompile Include="randoms.cpp" />
@@ -161,6 +162,7 @@
     <ClInclude Include="Enemy.h" />
     <ClInclude Include="floor.h" />
     <ClInclude Include="Hexahedron.h" />
+    <ClInclude Include="particle.h" />
     <ClInclude Include="pyramid.h" />
     <ClInclude Include="player.h" />
     <ClInclude Include="randoms.h" />
