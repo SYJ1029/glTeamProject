@@ -310,3 +310,9 @@ void DeleteEnemy(int index) {
 
 
 
+void EnemyDyingFunc(int value) { // 적의 사망은 main에서
+	
+	
+
+	glutTimerFunc(10, EnemyDyingFunc, value);
+}

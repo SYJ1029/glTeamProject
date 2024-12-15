@@ -16,6 +16,7 @@ typedef struct Bullet {
 	GLfloat x, y, z;
 	GLfloat dx, dy, dz;
 	int damage;
+	bool damaged;
 };
 
 void shootBullet(Player& player, std::vector<Bullet>& g_bullets);

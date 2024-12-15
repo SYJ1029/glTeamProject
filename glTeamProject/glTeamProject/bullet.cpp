@@ -109,6 +109,8 @@ void checkCollisionWithEnemies(std::vector<Bullet>& g_bullets, std::vector<Enemy
         if (closestEnemyIndex != -1) {
             // 변경해야함
             g_enemies[closestEnemyIndex].hp -= g_bullets[i].damage;
+            g_enemies[closestEnemyIndex].damaged = true;
+ 
             //g_enemies.erase(g_enemies.begin() + closestEnemyIndex);
             collided = true;
         }

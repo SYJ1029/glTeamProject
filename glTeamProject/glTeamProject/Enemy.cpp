@@ -18,6 +18,11 @@ void InitEnemy(float playerx, float playerz, std::vector<Enemy>& g_enemies) {
 	newenemy.z += playerz;
 
 	newenemy.speed = 0.01f;
+	newenemy.hp = 10;
+	newenemy.damage = 5;
+	newenemy.damaged = false;
+
+	newenemy.backframe = 0;
 
 	g_enemies.push_back(newenemy); // 리스트에 추가
 }
@@ -26,6 +31,8 @@ typedef struct Direction {
 	int x;
 	int z;
 };
+
+int backcnt = 0;
 
 vec3 AStar(float playerx, float playerz, Enemy& enemy, int** maptile, int row, int column) {
 	// 0. 타일 상의 이동방향 정의
@@ -76,18 +83,45 @@ vec3 AStar(float playerx, float playerz, Enemy& enemy, int** maptile, int row, i
 	return vec3(i + result.x, 0.0f, j + result.z); // 계산 결과를 정규화 하여 반환
 }
 
+void EnemyDamageFunc(int value) {
+
+}
+
 void MoveEnemy(float playerx, float playerz, std::vector<Enemy>& g_enemies, int** maptile, int row, int column) {
 	float dx = 0, dz = 0;
+	vec3 direct;
 
 	for (int i = 0; i < g_enemies.size(); i++) {
-		dx = playerx - g_enemies[i].x;
-		dz = playerz - g_enemies[i].z;
 
-		vec3 direct = AStar(playerx, playerz, g_enemies[i], maptile, row, column);
-		g_enemies[i].x = g_enemies[i].x + direct.x * g_enemies[i].speed;
-		g_enemies[i].z = g_enemies[i].z + direct.z * g_enemies[i].speed;
+		if (g_enemies[i].hp > 0) { // 적이 살아있을 때만 진입
+			if (g_enemies[i].damaged) {
+				dx = playerx - g_enemies[i].x;
+				dz = playerz - g_enemies[i].z;
+
+				direct = { -dx * 3.0f, 0.0f, -dz * 3.0f };
+
+
+				g_enemies[i].backframe++;
+
+				if (g_enemies[i].backframe > 3) {
+					g_enemies[i].backframe = 0;
+					g_enemies[i].damaged = false;
+				}
+			}
+			else {
+				dx = playerx - g_enemies[i].x;
+				dz = playerz - g_enemies[i].z;
+
+				direct = AStar(playerx, playerz, g_enemies[i], maptile, row, column);
+			}
+
+			g_enemies[i].x = g_enemies[i].x + direct.x * g_enemies[i].speed;
+			g_enemies[i].z = g_enemies[i].z + direct.z * g_enemies[i].speed;
+		}
 	}
 }
+
+
 
 void drawEnemy(GLint modelLoc, GLUquadricObj*& qobj, std::vector<Enemy>& g_enemies) {
 	glBindVertexArray(sphereVAO);
