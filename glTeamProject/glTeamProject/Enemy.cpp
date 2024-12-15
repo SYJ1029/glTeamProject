@@ -185,6 +185,7 @@ void drawEnemy(GLint modelLoc, GLUquadricObj*& qobj, std::vector<Enemy>& g_enemi
 		enemyModelMat = glm::translate(enemyModelMat, vec3(0.0f, 0.0f, 0.0f));
 		enemyModelMat *= baseModelMat; // 회전한 흔적 제거
 
+		baseModelMat = mat4(1.0f);
 		baseModelMat = glm::translate(baseModelMat, vec3(0.0f, 0.0f, 0.0f)); // 다시 초기화
 	}
 
