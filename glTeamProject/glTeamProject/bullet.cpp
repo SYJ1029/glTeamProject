@@ -106,6 +106,7 @@ void checkCollisionWithEnemies(std::vector<Bullet>& g_bullets, std::vector<Enemy
             }
             else {
                 printf("head\n");
+                addParticles(glm::vec3(g_enemies[closestEnemyIndex].x, g_enemies[closestEnemyIndex].y, g_enemies[closestEnemyIndex].z));
                 g_enemies[closestEnemyIndex].hp -= 10;
             }
             //g_enemies.erase(g_enemies.begin() + closestEnemyIndex);
@@ -119,4 +120,3 @@ void checkCollisionWithEnemies(std::vector<Bullet>& g_bullets, std::vector<Enemy
         }
     }
 }
-

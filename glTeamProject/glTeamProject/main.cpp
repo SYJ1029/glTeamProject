@@ -21,6 +21,7 @@
 #include "Enemy.h"
 #include "Building.h"
 #include "pyramid.h"
+#include "particle.h"
 
 using namespace glm;
 using namespace std;
@@ -41,7 +42,6 @@ Player player;
 
 std::vector<Enemy>g_enemies;
 int genEnemyInterval = 5000;
-
 
 std::vector<Building>g_buildings;
 Model buildingModel;
@@ -106,6 +106,7 @@ void timerFunc(int value) {
 	checkCollisionWithEnemies(g_bullets, g_enemies);
 	playerCollisionWithEnemy(player, g_enemies);
 	BuildingCollisionBullet(g_buildings, g_bullets);
+	updateParticles();
 	setupCamera();
 	glutPostRedisplay();
 	glutTimerFunc(30, timerFunc, 0);
@@ -283,6 +284,7 @@ GLvoid drawScene() {
 	drawEnemy(modelLoc, qobj, g_enemies);
 	drawBuliding(modelLoc, g_buildings, player.x, player.z, maptile, tilerow, tilecolumn, onNVD);
 	drawBullets(modelLoc, player, g_bullets);
+	drawParticles(modelLoc);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 
 	// ¹Ì´Ï¸Ê

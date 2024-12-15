@@ -4,6 +4,7 @@
 #include "sphere.h"
 #include "shader.h"
 #include "Enemy.h"
+#include "particle.h"
 #include <gl/glew.h>
 #include <gl/glm/glm/glm.hpp>
 #include <gl/glm/glm/ext.hpp>
