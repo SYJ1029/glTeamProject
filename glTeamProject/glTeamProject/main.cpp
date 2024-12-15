@@ -21,6 +21,7 @@
 #include "Enemy.h"
 #include "Building.h"
 #include "pyramid.h"
+#include "particle.h"
 
 using namespace glm;
 using namespace std;
@@ -42,7 +43,6 @@ Player player;
 std::vector<Enemy>g_enemies;
 int genEnemyInterval = 5000;
 
-
 std::vector<Building>g_buildings;
 Model buildingModel;
 int numBuild = 30;
@@ -58,6 +58,7 @@ float deltaX = 0.0f, deltaY = 0.0f;
 vec3 cameraPos = vec3(0.0f, 8.0f, 0.0f);		//--- 카메라 위치
 vec3 cameraDirection = vec3(0.0f, 0.0f, 0.0f);	//--- 카메라 바라보는 방향
 vec3 cameraUp = vec3(0.0f, 1.0f, 0.0f);			//--- 카메라 위쪽 방향
+vec3 directionVector;
 float rotationSpeed = 1.0f;						// 카메라 회전 속도 (deg/sec)
 
 vec3 lightPos = vec3(0.0f, 200.0f, 0.0f);
@@ -75,8 +76,13 @@ void setupCamera() {
 
 	cameraDirection.x = player.x + 2 * (radius * cos(glm::radians(player.angleXZ)));
 	cameraDirection.y = cameraPos.y - 2 * (radius * sin(glm::radians(player.angleY)));
-
 	cameraDirection.z = player.z + 2 * (radius * sin(glm::radians(player.angleXZ)));
+
+	directionVector.x = cameraDirection.x - cameraPos.x;
+	directionVector.y = cameraDirection.y - cameraPos.y;
+	directionVector.z = cameraDirection.z - cameraPos.z;
+
+	directionVector = glm::normalize(directionVector);
 
 	view = lookAt(cameraPos, cameraDirection, cameraUp);
 	projection = perspective(radians(45.0f), (float)WINDOW_X / (float)WINDOW_Y, 0.1f, 175.0f);
@@ -100,6 +106,7 @@ void timerFunc(int value) {
 	checkCollisionWithEnemies(g_bullets, g_enemies);
 	playerCollisionWithEnemy(player, g_enemies);
 	BuildingCollisionBullet(g_buildings, g_bullets);
+	updateParticles();
 	setupCamera();
 	glutPostRedisplay();
 	glutTimerFunc(30, timerFunc, 0);
@@ -165,7 +172,7 @@ void keyboardUp(unsigned char key, int x, int y) {
 void Mouse(int button, int state, int x, int y) {
 	if (button == GLUT_LEFT_BUTTON) {
 		if (state == GLUT_DOWN) {
-			shootBullet(player, g_bullets);
+			shootBullet(player, g_bullets, directionVector);
 		}
 	}
 	glutPostRedisplay();
@@ -186,11 +193,11 @@ void PassiveMotion(int x, int y) {
 		float angleIncrement = 0.1f;
 		player.angleXZ += deltaX * angleIncrement;
 		player.angleY += deltaY * angleIncrement;
-		if (player.angleY >= 45.0f) {
-			player.angleY = 45.0f;
+		if (player.angleY >= 15.0f) {
+			player.angleY = 15.0f;
 		}
-		else if (player.angleY <= -45.0f) {
-			player.angleY = -45.0f;
+		else if (player.angleY <= -15.0f) {
+			player.angleY = -15.0f;
 		}
 		if (player.angleXZ >= 360.0f) player.angleXZ -= 360.0f;
 		if (player.angleXZ < 0.0f) player.angleXZ += 360.0f;
@@ -277,13 +284,14 @@ GLvoid drawScene() {
 	drawEnemy(modelLoc, qobj, g_enemies);
 	drawBuliding(modelLoc, g_buildings, player.x, player.z, maptile, tilerow, tilecolumn, onNVD);
 	drawBullets(modelLoc, player, g_bullets);
+	drawParticles(modelLoc);
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.0f, 0.0f, 0.0f);
 
 	// 미니맵
 	glDisable(GL_DEPTH_TEST);
 	glViewport(WINDOW_X * 3 / 4, WINDOW_Y * 3 / 4, WINDOW_X / 4, WINDOW_Y / 4); // 오른쪽 위
 	vec3 bodyModelPosV2 = vec3(player.x, 0.0f, player.z); // bodyModel의 대략적인 위치
-	vec3 cameraPosV2 = vec3(player.x, 10.0f, player.z);
+	vec3 cameraPosV2 = vec3(player.x, 130.0f, player.z);
 	mat4 bodyViewV2 = lookAt(cameraPosV2, bodyModelPosV2, vec3(cos(radians(player.angleXZ)), 0.0f, sin(radians(player.angleXZ)))); // bodyModel을 바라보는 뷰 행렬
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(bodyViewV2));
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, value_ptr(projection));
