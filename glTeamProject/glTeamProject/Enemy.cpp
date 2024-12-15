@@ -49,42 +49,56 @@ vec3 AStar(float playerx, float playerz, Enemy& enemy, int** maptile, int row, i
 	};
 	// 1. Enemy와 Player의 타일상의 위치를 받아오기
 
+	std::vector<Direction> tilelist;
+
 	int i = (int)((enemy.x + 100.0f) / 5.0f);
 	int j = (int)((enemy.z + 100.0f) / 5.0f);
 
-	int pi = (int)((playerx + 100.0f) / 5.0f);
-	int pj = (int)((playerz + 100.0f) / 5.0f);
+	tilelist.push_back({ i, j });
 
-	// 2. 직선거리방향 타일 정의
-	int dx = vec3(playerx - enemy.x, 0.0f, 0.0f).x;
-	int dz = vec3(0.0f, 0.0f, playerz - enemy.z).z;
+	for (int count = 0; count < 4; count++) {
+		int pi = (int)((playerx + 100.0f) / 5.0f);
+		int pj = (int)((playerz + 100.0f) / 5.0f);
 
-	// 3. 최단거리방향 타일이 비어있는지 검사
-	
-	if (maptile[i][j] == 0)
-		return vec3(dx, 0, dz); // 비어있다면, 그 타일을 향해 이동한다.
-	
-	// 4. 나머지 방향들 중에서 거리가 가장 적은 타일을 찾는다.
+		// 2. 직선거리방향 타일 정의
+		int dx = vec3(playerx - enemy.x, 0.0f, 0.0f).x;
+		int dz = vec3(0.0f, 0.0f, playerz - enemy.z).z;
 
-	float maxdist = 0;
-	Direction result = { -5, -5 };
-	for (int index = 0; index < 8; index++) {
-		Direction way = ways[index];
+		// 3. 최단거리방향 타일이 비어있는지 검사
 
-		if (i + way.x < 0 || i + way.x >= row ||
-			j + way.z < 0 || j + way.z >= column)
-			continue; // 범위를 벗어난 값은 고려하지 않는다.
+		if (maptile[tilelist[count].x][tilelist[count].z] == 0)
+			return vec3(dx, 0, dz); // 비어있다면, 그 타일을 향해 이동한다.
 
-		if (distance(vec3(index + way.x, 0.0f, index + way.z), vec3(pj, 0.0f, pi)) > maxdist) {
-			maxdist = distance(vec3(index + way.x, 0.0f, index + way.z), vec3(pj, 0.0f, pi));
-			result = way;
+		// 4. 나머지 방향들 중에서 거리가 가장 적은 타일을 찾는다.
+
+		float maxdist = 0;
+		Direction result = { -5, -5 };
+
+		for (int index = 0; index < 8; index++) {
+			Direction way = ways[index];
+
+			if (tilelist[count].x + way.x < 0 || tilelist[count].x + way.x >= row ||
+				tilelist[count].z + way.z < 0 || tilelist[count].z + way.z >= column)
+				continue; // 범위를 벗어난 값은 고려하지 않는다.
+
+			if (distance(vec3(index + way.x, 0.0f, index + way.z), vec3(pj, 0.0f, pi)) > maxdist) {
+				maxdist = distance(vec3(index + way.x, 0.0f, index + way.z), vec3(pj, 0.0f, pi));
+				result = way;
+			}
+
 		}
 
-	}
-	
-	if (result.z < -1) return vec3(0, 0, 0); // 잘못된 값이 나왔다면 일단 정지시킨다.
+		if (result.z < -1) return vec3(0, 0, 0); // 잘못된 값이 나왔다면 일단 정지시킨다.
 
-	return vec3(i + result.x, 0.0f, j + result.z); // 계산 결과를 정규화 하여 반환
+		i += result.x;
+		j += result.z;
+
+		tilelist.push_back({ i, j });
+	}
+
+	
+
+	return vec3(tilelist[1].x, 0.0f, tilelist[1].z); // 계산 결과를 반환
 }
 
 void EnemyDamageFunc(int value) {
