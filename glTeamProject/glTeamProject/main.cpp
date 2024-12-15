@@ -45,7 +45,7 @@ int genEnemyInterval = 5000;
 
 std::vector<Building>g_buildings;
 Model buildingModel;
-int numBuild = 30;
+int numBuild = 60;
 int** maptile;
 int tilerow = 50, tilecolumn = 50;
 bool onNVD = false;
