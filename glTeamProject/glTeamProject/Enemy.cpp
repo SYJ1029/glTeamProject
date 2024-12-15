@@ -2,7 +2,11 @@
 
 #include "Enemy.h"
 #include "randoms.h"
-
+#include <gl/glew.h>
+#include <gl/freeglut.h>
+#include <gl/glm/glm/glm.hpp>
+#include <gl/glm/glm/ext.hpp>
+#include <gl/glm/glm/gtc/matrix_transform.hpp>
 
 void InitEnemy(float playerx, float playerz, std::vector<Enemy>& g_enemies) {
 	Enemy newenemy; // 새로 만들 적 선언
@@ -118,6 +122,12 @@ void MoveEnemy(float playerx, float playerz, std::vector<Enemy>& g_enemies, int*
 			g_enemies[i].x = g_enemies[i].x + direct.x * g_enemies[i].speed;
 			g_enemies[i].z = g_enemies[i].z + direct.z * g_enemies[i].speed;
 		}
+		else {
+			if (g_enemies[i].damaged == false) {
+				glutTimerFunc(10, EnemyDyingFunc, i);
+				g_enemies[i].damaged = true;
+			}
+		}
 	}
 }
 
@@ -126,11 +136,18 @@ void MoveEnemy(float playerx, float playerz, std::vector<Enemy>& g_enemies, int*
 void drawEnemy(GLint modelLoc, GLUquadricObj*& qobj, std::vector<Enemy>& g_enemies) {
 	glBindVertexArray(sphereVAO);
 
-	mat4 baseModelMat = glm::translate(mat4(1.0f), vec3(0.0f, 0.0f, 0.0f)); // 적이 그려지는 도형 전체에 대한 이동
+	mat4 baseModelMat = mat4(1.0f);
+	baseModelMat = glm::translate(baseModelMat, vec3(0.0f, 0.0f, 0.0f)); // 적이 그려지는 도형 전체에 대한 이동
 
 
 	for (int i = 0; i < g_enemies.size(); i++) {
-		baseModelMat = glm::translate(mat4(1.0f), vec3(g_enemies[i].x, g_enemies[i].y, g_enemies[i].z));
+		baseModelMat = glm::rotate(baseModelMat, glm::radians(g_enemies[i].angleX), vec3(1.0f, 0.0f, 0.0f));
+
+		baseModelMat = glm::translate(baseModelMat, vec3(g_enemies[i].x, g_enemies[i].y, g_enemies[i].z));
+		baseModelMat = glm::rotate(baseModelMat, glm::radians(g_enemies[i].angleZ), vec3(0.0f, 0.0f, 1.0f));
+		baseModelMat = glm::translate(baseModelMat, vec3(-g_enemies[i].x, -g_enemies[i].y, -g_enemies[i].z));
+
+		baseModelMat = glm::translate(baseModelMat, vec3(g_enemies[i].x, g_enemies[i].y, g_enemies[i].z));
 
 		mat4 enemyModelMat = mat4(1.0f); // 적 모델 행렬
 		glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 1.0f, 0.5f, 1.0f);
@@ -153,4 +170,14 @@ void drawEnemy(GLint modelLoc, GLUquadricObj*& qobj, std::vector<Enemy>& g_enemi
 
 	//glBindVertexArray(enemyVAO);
 	glBindVertexArray(0); // VAO 언바인딩
+}
+
+void EnemyDyingFunc(int value) {
+	g_enemies[value].angleZ += 1;
+
+	if (g_enemies[value].angleZ >= 90.0f) {
+		g_enemies.erase(g_enemies.begin() + value);
+	}
+	else
+		glutTimerFunc(10, EnemyDyingFunc, value);
 }

@@ -103,6 +103,7 @@ void checkCollisionWithEnemies(std::vector<Bullet>& g_bullets, std::vector<Enemy
             if (bullet.y < 2.0f) {
                 printf("body\n");
                 g_enemies[closestEnemyIndex].hp -= g_bullets[i].damage;
+                g_enemies[closestEnemyIndex].damaged = true;
             }
             else {
                 printf("head\n");

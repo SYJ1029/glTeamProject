@@ -40,7 +40,7 @@ mat4 projection;
 GLUquadricObj* qobj = nullptr;
 Player player;
 
-std::vector<Enemy>g_enemies;
+std::vector<Enemy> g_enemies;
 int genEnemyInterval = 5000;
 
 std::vector<Building>g_buildings;
@@ -317,10 +317,3 @@ void DeleteEnemy(int index) {
 }
 
 
-
-void EnemyDyingFunc(int value) { // 적의 사망은 main에서
-	
-	
-
-	glutTimerFunc(10, EnemyDyingFunc, value);
-}
