@@ -20,6 +20,8 @@ typedef struct Enemy {
 	bool damaged;
 
 	int backframe;
+	bool died;
+	bool first;
 };
 
 //extern GLuint enemyVAO, enemyVBO, enemyEBO;

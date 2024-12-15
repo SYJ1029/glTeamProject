@@ -79,6 +79,7 @@ void checkCollisionWithEnemies(std::vector<Bullet>& g_bullets, std::vector<Enemy
 
         // 각 총알에 대해 모든 적과의 충돌을 검사
         for (int j = 0; j < g_enemies.size(); j++) {
+
             Enemy& enemy = g_enemies[j];
             float distanceToEnemy = glm::distance(glm::vec2(bullet.x, bullet.z), glm::vec2(enemy.x, enemy.z));
 
@@ -105,11 +106,15 @@ void checkCollisionWithEnemies(std::vector<Bullet>& g_bullets, std::vector<Enemy
                 g_enemies[closestEnemyIndex].hp -= g_bullets[i].damage;
                 if(g_enemies[closestEnemyIndex].hp > 0)
                     g_enemies[closestEnemyIndex].damaged = true;
+                else {
+                    g_enemies[closestEnemyIndex].died = true;
+                }
             }
             else {
                 printf("head\n");
                 addParticles(glm::vec3(g_enemies[closestEnemyIndex].x, g_enemies[closestEnemyIndex].y, g_enemies[closestEnemyIndex].z));
                 g_enemies[closestEnemyIndex].hp -= 10;
+                g_enemies[closestEnemyIndex].died = true;
             }
             //g_enemies.erase(g_enemies.begin() + closestEnemyIndex);
             collided = true;

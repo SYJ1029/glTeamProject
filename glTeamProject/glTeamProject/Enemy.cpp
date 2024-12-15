@@ -27,6 +27,8 @@ void InitEnemy(float playerx, float playerz, std::vector<Enemy>& g_enemies) {
 	newenemy.damaged = false;
 
 	newenemy.backframe = 0;
+	newenemy.died = false;
+	newenemy.first = true;
 
 	g_enemies.push_back(newenemy); // 리스트에 추가
 }
@@ -88,7 +90,8 @@ vec3 AStar(float playerx, float playerz, Enemy& enemy, int** maptile, int row, i
 
 		}
 
-		if (result.z < -1) return vec3(0, 0, 0); // 잘못된 값이 나왔다면 일단 정지시킨다.
+		if (result.z < -1) 
+			return vec3(0, 0, 0); // 잘못된 값이 나왔다면 일단 정지시킨다.
 
 		i += result.x;
 		j += result.z;
@@ -111,7 +114,7 @@ void MoveEnemy(float playerx, float playerz, std::vector<Enemy>& g_enemies, int*
 
 	for (int i = 0; i < g_enemies.size(); i++) {
 
-		if (g_enemies[i].hp > 0) { // 적이 살아있을 때만 진입
+		if (g_enemies[i].hp > 0 && g_enemies[i].died == false) { // 적이 살아있을 때만 진입
 			if (g_enemies[i].damaged) {
 				dx = playerx - g_enemies[i].x;
 				dz = playerz - g_enemies[i].z;
@@ -137,10 +140,12 @@ void MoveEnemy(float playerx, float playerz, std::vector<Enemy>& g_enemies, int*
 			g_enemies[i].z = g_enemies[i].z + direct.z * g_enemies[i].speed;
 		}
 		else {
-			if (g_enemies[i].damaged == false) {
+
+			if (g_enemies[i].first) {
 				glutTimerFunc(10, EnemyDyingFunc, i);
-				g_enemies[i].damaged = true;
+				g_enemies[i].first = false;
 			}
+			
 		}
 	}
 }
@@ -188,6 +193,8 @@ void drawEnemy(GLint modelLoc, GLUquadricObj*& qobj, std::vector<Enemy>& g_enemi
 
 void EnemyDyingFunc(int value) {
 	g_enemies[value].angleZ += 1;
+
+
 
 	if (g_enemies[value].angleZ >= 90.0f) {
 		g_enemies.erase(g_enemies.begin() + value);
