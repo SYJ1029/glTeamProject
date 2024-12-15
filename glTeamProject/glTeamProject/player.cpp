@@ -36,20 +36,25 @@ void drawPlayer(GLint modelLoc, GLUquadricObj*& qobj, Player &player) {
 	gluCylinder(qobj, 1.0, 0.3, 1.5, 20, 8);
 
 	glBindVertexArray(hexVao);
-	float radius = 1.8f;
+	float radius = 1.5f;
 	glUniform3f(glGetUniformLocation(shaderProgramID, "objectColor"), 0.2f, 0.2f, 0.2f);
 	//¸ö
 	mat4 gunModelBody = playerModelMat;
 	gunModelBody = glm::translate(gunModelBody, vec3(0.0f, 0.0f, 1.8f));
 	gunModelBody = glm::rotate(gunModelBody, glm::radians(90.0f), vec3(1.0f, 0.0f, 0.0f));
-	gunModelBody = translate(gunModelBody, vec3(radius * glm::cos(radians(player.angleXZ)), 0.0f, radius * glm::sin(radians(player.angleXZ)))); //  + 8.0f
+	gunModelBody = translate(gunModelBody, vec3(radius * glm::cos(radians(player.angleXZ)), 0.0f, radius * glm::sin(radians(player.angleXZ))));
 	gunModelBody = glm::rotate(gunModelBody, glm::radians(-player.angleXZ), vec3(0.0f, 1.0f, 0.0f));
-	gunModelBody = translate(gunModelBody, vec3(-(radius - (radius * glm::cos(radians(-player.angleY)))), radius * glm::sin(radians(-player.angleY)), 0.0f));
+	gunModelBody = translate(gunModelBody, vec3((radius - (radius * glm::cos(radians(-player.angleY)))), radius * glm::sin(radians(-player.angleY)), (radius - (radius * glm::cos(radians(-player.angleY))))));
 	gunModelBody = glm::rotate(gunModelBody, glm::radians(-player.angleY), vec3(0.0f, 0.0f, 1.0f));
 	gunModelBody = scale(gunModelBody, vec3(0.1f, 0.1f, 0.1f));
 	gunModelBody = glm::translate(gunModelBody, vec3(-1.0f, 0.0f, 0.0f));
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(gunModelBody));
 	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+	glm::vec4 gunMuzzleOffset = glm::vec4(1.5f, 0.0f, 0.0f, 1.0f); // ÃÑ±¸ÀÇ À§Ä¡ ¿ÀÇÁ¼Â
+	glm::vec4 gunMuzzleWorldPosition = gunModelBody * gunMuzzleOffset; // ÃÑ±¸ÀÇ ¿ùµå ÁÂÇ¥ °è»ê
+	player.gunMuzzleWorldPositionVec3 = glm::vec3(gunMuzzleWorldPosition.x, gunMuzzleWorldPosition.y, gunMuzzleWorldPosition.z);
+
 	//¼ÕÀâÀÌ
 	mat4 gunModelHandle = gunModelBody;
 	gunModelHandle = glm::translate(gunModelHandle, vec3(0.0f, -1.0f, 0.0f));
@@ -102,7 +107,6 @@ void updatePlayer(Player& player, bool buildcollision) {
 	}
 
 	if (player.y > 0.0f || player.dy < 0.0f || player.dy > 0.0f) {
-		printf("%f, %f\n", player.y, player.dy);
 		player.y += player.dy;
 
 		applyGravity(player);

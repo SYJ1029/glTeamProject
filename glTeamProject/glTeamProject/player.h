@@ -21,6 +21,7 @@ typedef struct Player {
 	GLfloat angleXZ;
 	GLfloat angleY;
 	bool gun;
+	vec3 gunMuzzleWorldPositionVec3;
 };
 
 void InitPlayer(GLUquadricObj* &qobj, Player &player);
