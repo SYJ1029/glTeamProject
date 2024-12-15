@@ -69,12 +69,13 @@ float ambientLight = 0.5f;
 void setupCamera() {
 	float radius = 1.0f;
 
-	cameraPos.x = player.x + radius * cos(glm::radians(player.angleXZ));
-	cameraPos.y = player.y + 2.0f;
-	cameraPos.z = player.z + radius * sin(glm::radians(player.angleXZ));
+	cameraPos.x = player.x + radius * cos(glm::radians(player.angleXZ)) * cos(glm::radians(player.angleY));
+	cameraPos.y = player.y + 2.0f + radius * sin(glm::radians(-player.angleY)); // Y축 위치는 player.y + 2 기준
+	cameraPos.z = player.z + radius * sin(glm::radians(player.angleXZ)) * cos(glm::radians(player.angleY));
 
 	cameraDirection.x = player.x + 2 * (radius * cos(glm::radians(player.angleXZ)));
-	cameraDirection.y = cameraPos.y;
+	cameraDirection.y = cameraPos.y - 2 * (radius * sin(glm::radians(player.angleY)));
+
 	cameraDirection.z = player.z + 2 * (radius * sin(glm::radians(player.angleXZ)));
 
 	view = lookAt(cameraPos, cameraDirection, cameraUp);
@@ -184,7 +185,13 @@ void PassiveMotion(int x, int y) {
 
 		float angleIncrement = 0.1f;
 		player.angleXZ += deltaX * angleIncrement;
-
+		player.angleY += deltaY * angleIncrement;
+		if (player.angleY >= 45.0f) {
+			player.angleY = 45.0f;
+		}
+		else if (player.angleY <= -45.0f) {
+			player.angleY = -45.0f;
+		}
 		if (player.angleXZ >= 360.0f) player.angleXZ -= 360.0f;
 		if (player.angleXZ < 0.0f) player.angleXZ += 360.0f;
 
