@@ -13,6 +13,7 @@ void shootBullet(Player& player, std::vector<Bullet>& g_bullets) {
         newBullet.dx = direction.x;
         newBullet.dy = direction.y;
         newBullet.dz = direction.z;
+        newBullet.damage = 2;
         printf("%f, %f, %f, %f\n", newBullet.dx, newBullet.dz, newBullet.x, newBullet.z);
 
         g_bullets.push_back(newBullet);
@@ -34,6 +35,7 @@ void shootBullet(Player& player, std::vector<Bullet>& g_bullets) {
             newBullet.dx = direction.x;
             newBullet.dy = direction.y;
             newBullet.dz = direction.z;
+            newBullet.damage = 1;
             printf("%f, %f, %f, %f\n", newBullet.dx, newBullet.dz, newBullet.x, newBullet.z);
 
             g_bullets.push_back(newBullet);
@@ -105,7 +107,9 @@ void checkCollisionWithEnemies(std::vector<Bullet>& g_bullets, std::vector<Enemy
 
         // 가장 가까운 적과 충돌이 발생했다면 해당 적을 제거
         if (closestEnemyIndex != -1) {
-            g_enemies.erase(g_enemies.begin() + closestEnemyIndex);
+            // 변경해야함
+            g_enemies[closestEnemyIndex].hp -= g_bullets[i].damage;
+            //g_enemies.erase(g_enemies.begin() + closestEnemyIndex);
             collided = true;
         }
 
