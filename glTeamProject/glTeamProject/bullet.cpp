@@ -100,8 +100,14 @@ void checkCollisionWithEnemies(std::vector<Bullet>& g_bullets, std::vector<Enemy
 
         // 가장 가까운 적과 충돌이 발생했다면 해당 적을 제거
         if (closestEnemyIndex != -1) {
-            // 변경해야함
-            g_enemies[closestEnemyIndex].hp -= g_bullets[i].damage;
+            if (bullet.y < 2.0f) {
+                printf("body\n");
+                g_enemies[closestEnemyIndex].hp -= g_bullets[i].damage;
+            }
+            else {
+                printf("head\n");
+                g_enemies[closestEnemyIndex].hp -= 10;
+            }
             //g_enemies.erase(g_enemies.begin() + closestEnemyIndex);
             collided = true;
         }

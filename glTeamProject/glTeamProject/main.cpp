@@ -83,7 +83,6 @@ void setupCamera() {
 	directionVector.z = cameraDirection.z - cameraPos.z;
 
 	directionVector = glm::normalize(directionVector);
-	printf("%f, %f, %f\n", cameraDirection.x, cameraDirection.y, cameraDirection.z);
 
 	view = lookAt(cameraPos, cameraDirection, cameraUp);
 	projection = perspective(radians(45.0f), (float)WINDOW_X / (float)WINDOW_Y, 0.1f, 175.0f);
