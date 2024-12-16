@@ -66,12 +66,15 @@ vec3 AStar(float playerx, float playerz, Enemy& enemy, int** maptile, int row, i
 	int pi = (int)((playerx + 100.0f) / 5.0f);
 	int pj = (int)((playerz + 100.0f) / 5.0f);
 
-
+	if (dx != 0)
+		dx /= abs(dx);
+	if (dz != 0)
+		dz /= abs(dz);
 
 	// 2. 최단거리방향 타일이 비어있는지 검사
 
-	if (maptile[i][j] == 0)
-		return vec3(dx, 0, dz); // 비어있다면, 그 타일을 향해 이동한다.
+	if (maptile[i + dx][j + dz] == 0)
+		return vec3(dx * 10, 0, dz * 10); // 비어있다면, 그 타일을 향해 이동한다.
 
 	// 4. 나머지 방향들 중에서 거리가 가장 적은 타일을 찾는다.
 
