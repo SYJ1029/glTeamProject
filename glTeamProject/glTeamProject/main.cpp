@@ -47,7 +47,7 @@ std::vector<Building>g_buildings;
 Model buildingModel;
 int numBuild = 60;
 int** maptile;
-int tilerow = 50, tilecolumn = 50;
+int tilerow = 100, tilecolumn = 100;
 bool onNVD = false;
 
 std::vector<Bullet>g_bullets;
