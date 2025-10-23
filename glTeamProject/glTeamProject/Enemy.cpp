@@ -1,12 +1,9 @@
 #pragma once
 
+#include "pch.h"
+
 #include "Enemy.h"
 #include "randoms.h"
-#include <gl/glew.h>
-#include <gl/freeglut.h>
-#include <gl/glm/glm/glm.hpp>
-#include <gl/glm/glm/ext.hpp>
-#include <gl/glm/glm/gtc/matrix_transform.hpp>
 
 void InitEnemy(float playerx, float playerz, std::vector<Enemy>& g_enemies) {
 	Enemy newenemy; // 새로 만들 적 선언

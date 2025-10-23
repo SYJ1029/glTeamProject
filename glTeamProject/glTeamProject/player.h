@@ -1,19 +1,53 @@
 #pragma once
 
+#include "pch.h"
+
+#include "Object.h"
+
 #include "sphere.h"
 #include "shader.h"
 #include "Hexahedron.h"
 #include "pyramid.h"
 #include "Enemy.h"
 
-#include <gl/glew.h>
-#include <gl/glm/glm/glm.hpp>
-#include <gl/glm/glm/ext.hpp>
-#include <gl/glm/glm/gtc/matrix_transform.hpp>
+
 
 using namespace glm;
 
 extern GLuint playerVAO, playerVBO, playerEBO;
+
+
+//class Player {
+//private:
+//	GLfloat x, y, z;
+//	GLfloat dx, dy, dz;
+//	GLfloat angleXZ;
+//	GLfloat angleY;
+//	bool gun;
+//	vec3 gunMuzzleWorldPositionVec3;
+//
+//public:
+//	Player() {}
+//	Player(GLUquadricObj*& qobj, Player& player);
+//
+//
+//	virtual void Init(GLUquadricObj*& qobj, Player& player);
+//	virtual void draw(GLint modelLoc, GLUquadricObj*& qobj, Player& player);
+//
+//	inline void applyGravity() {
+//		if (dy > -0.5f) {
+//			dy -= 0.02f;
+//		}
+//	}
+//	void jump();
+//
+//	void update(bool build);
+//
+//	void playerCollisionWithEnemy(std::vector<Enemy>& g_enemies);
+//	float GetNextXZ(int option);
+//
+//
+//};
 
 typedef struct Player {
 	GLfloat x, y, z;

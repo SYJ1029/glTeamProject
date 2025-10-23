@@ -1,13 +1,10 @@
 #pragma once
 
+#include "pch.h"
+
 #include "sphere.h"
 #include "shader.h"
 #include "readObj.h"
-#include <gl/glew.h>
-#include <gl/glew.h>
-#include <gl/glm/glm/glm.hpp>
-#include <gl/glm/glm/ext.hpp>
-#include <gl/glm/glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <stdlib.h>
 #include "bullet.h"

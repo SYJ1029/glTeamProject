@@ -1,14 +1,13 @@
 #pragma once
 
+#include "pch.h"
+
 #include "player.h"
 #include "sphere.h"
 #include "shader.h"
 #include "Enemy.h"
 #include "particle.h"
-#include <gl/glew.h>
-#include <gl/glm/glm/glm.hpp>
-#include <gl/glm/glm/ext.hpp>
-#include <gl/glm/glm/gtc/matrix_transform.hpp>
+
 #include <vector>
 
 using namespace glm;

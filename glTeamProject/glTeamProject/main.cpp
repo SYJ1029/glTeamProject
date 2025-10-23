@@ -1,14 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <math.h>
-#include <gl/glew.h>
-#include <gl/freeglut.h>
-#include <gl/glm/glm/glm.hpp>
-#include <gl/glm/glm/ext.hpp>
-#include <gl/glm/glm/gtc/matrix_transform.hpp>
+#include "pch.h"
 #include <vector>
 #include "readObj.h"
 #include "rwTile.h"

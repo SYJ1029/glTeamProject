@@ -70,6 +70,22 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IncludePath>$(SolutionDir)External\freeglut\include;$(SolutionDir)External\glew\include;$(SolutionDir)External\glm;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\myGit\glTeamProject\glTeamProject\External\glew\lib\Release\x64;E:\myGit\glTeamProject\glTeamProject\External\freeglut\lib\x64;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IncludePath>$(SolutionDir)External\freeglut\include;$(SolutionDir)External\glew\include;$(SolutionDir)External\glm;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\myGit\glTeamProject\glTeamProject\External\glew\lib\Release\x64;E:\myGit\glTeamProject\glTeamProject\External\freeglut\lib\x64;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(SolutionDir)External\freeglut\include;$(SolutionDir)External\glew\include;$(SolutionDir)External\glm;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\myGit\glTeamProject\glTeamProject\External\glew\lib\Release\x64;E:\myGit\glTeamProject\glTeamProject\External\freeglut\lib\x64;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>$(SolutionDir)External\freeglut\include;$(SolutionDir)External\glew\include;$(SolutionDir)External\glm;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\myGit\glTeamProject\glTeamProject\External\glew\lib\Release\x64;E:\myGit\glTeamProject\glTeamProject\External\freeglut\lib\x64;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -135,6 +151,7 @@
     <ClCompile Include="Enemy.cpp" />
     <ClCompile Include="floor.cpp" />
     <ClCompile Include="Hexahedron.cpp" />
+    <ClCompile Include="Object.cpp" />
     <ClCompile Include="particle.cpp" />
     <ClCompile Include="pyramid.cpp" />
     <ClCompile Include="player.cpp" />
@@ -162,7 +179,9 @@
     <ClInclude Include="Enemy.h" />
     <ClInclude Include="floor.h" />
     <ClInclude Include="Hexahedron.h" />
+    <ClInclude Include="Object.h" />
     <ClInclude Include="particle.h" />
+    <ClInclude Include="pch.h" />
     <ClInclude Include="pyramid.h" />
     <ClInclude Include="player.h" />
     <ClInclude Include="randoms.h" />

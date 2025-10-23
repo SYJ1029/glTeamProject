@@ -1,9 +1,8 @@
 #pragma once
 
+#include "pch.h"
 #include "player.h"
-#include <gl/glew.h>
-#include <gl/glm/glm/glm.hpp>
-#include <gl/glm/glm/ext.hpp>
+
 
 using namespace glm;
 
